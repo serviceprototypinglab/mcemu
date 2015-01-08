@@ -1,0 +1,273 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+from PyQt4 import QtGui, QtCore
+from PyQt4.QtCore import pyqtSlot, Qt
+import sys
+import os
+import time
+
+sys.path.append("..")
+from mcsalgorithms.servicegen import ServiceGenerator
+from mcsalgorithms.distavail import Service, ServiceSet
+from mcsalgorithms.fixedproportional import FixedProportional
+from mcsalgorithms.combinatory import Combinatory
+from mcsalgorithms.picav import PICav
+
+class PICavVis(QtGui.QWidget):
+	def __init__(self, parent=None):
+		self.services = []
+		self.targetav = 0
+		self.targetc = 0
+		self.targetp = 0
+		self.targetruntime = 0
+		self.tracing = None
+		self.algorithm = None
+
+		self.setupgui(parent)
+		#self.setup()
+
+	def setupgui(self, parent):
+		QtGui.QWidget.__init__(self, parent)
+
+		self.resize(750, 500)
+		self.setWindowTitle("Multi-Cloud Storage Simulator")
+
+		model = QtGui.QStandardItemModel()
+		model.setColumnCount(5)
+		model.setHeaderData(0, Qt.Horizontal, "Service")
+		model.setHeaderData(1, Qt.Horizontal, "Availability")
+		model.setHeaderData(2, Qt.Horizontal, "Capacity")
+		model.setHeaderData(3, Qt.Horizontal, "Price")
+		model.setHeaderData(4, Qt.Horizontal, "Data")
+
+		self.qtv = QtGui.QTreeView(self)
+		self.qtv.setModel(model)
+		self.connect(self.qtv, QtCore.SIGNAL("pressed(QModelIndex)"), self, QtCore.SLOT("slot_pressed(QModelIndex)"))
+
+		label_target = QtGui.QLabel("Target availability (%):")
+		spinbox_target = QtGui.QSpinBox()
+		spinbox_target.setMaximum(100)
+		self.connect(spinbox_target, QtCore.SIGNAL("valueChanged(int)"), self, QtCore.SLOT("slot_changed_av(int)"))
+		label_capacity = QtGui.QLabel("Capacity (GB):")
+		spinbox_capacity = QtGui.QSpinBox()
+		spinbox_capacity.setMaximum(1000)
+		self.connect(spinbox_capacity, QtCore.SIGNAL("valueChanged(int)"), self, QtCore.SLOT("slot_changed_c(int)"))
+		label_price = QtGui.QLabel("Price (€):")
+		spinbox_price = QtGui.QSpinBox()
+		spinbox_price.setMaximum(1000)
+		self.connect(spinbox_price, QtCore.SIGNAL("valueChanged(int)"), self, QtCore.SLOT("slot_changed_p(int)"))
+		label_runtime = QtGui.QLabel("Runtime (s):")
+		spinbox_runtime = QtGui.QSpinBox()
+		spinbox_runtime.setMaximum(3600)
+		self.connect(spinbox_runtime, QtCore.SIGNAL("valueChanged(int)"), self, QtCore.SLOT("slot_changed_runtime(int)"))
+
+		label_algo = QtGui.QLabel("Algorithm:")
+		combo_algo = QtGui.QComboBox()
+		combo_algo.addItem("Fixed")
+		combo_algo.addItem("Proportional")
+		combo_algo.addItem("Combinatorial")
+		combo_algo.addItem("PICav")
+		combo_algo.addItem("PICav+")
+		self.connect(combo_algo, QtCore.SIGNAL("activated(QString)"), self, QtCore.SLOT("slot_algorithm(QString)"))
+		label_tracing = QtGui.QLabel("Tracing:")
+		combo_tracing = QtGui.QComboBox()
+		combo_tracing.addItem("None")
+		combo_tracing.addItem("Important")
+		combo_tracing.addItem("All")
+		self.connect(combo_tracing, QtCore.SIGNAL("activated(QString)"), self, QtCore.SLOT("slot_tracing(QString)"))
+		#button_constraints = QtGui.QPushButton("Constraints...")
+		button_algo = QtGui.QPushButton("Determine distribution")
+		self.connect(button_algo, QtCore.SIGNAL("pressed()"), self, QtCore.SLOT("slot_calculate()"))
+
+		self.label_algoout = QtGui.QLabel("")
+		self.label_algoout.setFrameStyle(QtGui.QFrame.Panel | QtGui.QFrame.Sunken)
+		self.text_algoout = QtGui.QTextEdit()
+		self.text_algoout.setReadOnly(True)
+
+		hbox_goals = QtGui.QHBoxLayout()
+		hbox_goals.addWidget(label_target)
+		hbox_goals.addWidget(spinbox_target)
+		hbox_goals.addWidget(label_capacity)
+		hbox_goals.addWidget(spinbox_capacity)
+		hbox_goals.addWidget(label_price)
+		hbox_goals.addWidget(spinbox_price)
+		hbox_goals.addWidget(label_runtime)
+		hbox_goals.addWidget(spinbox_runtime)
+		hbox_goals.addStretch()
+
+		hbox_algo = QtGui.QHBoxLayout()
+		hbox_algo.addWidget(label_algo)
+		hbox_algo.addWidget(combo_algo)
+		hbox_algo.addWidget(label_tracing)
+		hbox_algo.addWidget(combo_tracing)
+		#hbox_algo.addWidget(button_constraints)
+		hbox_algo.addWidget(button_algo)
+		hbox_algo.addStretch()
+
+		layout = QtGui.QVBoxLayout(self)
+		layout.addWidget(self.qtv)
+		layout.addLayout(hbox_goals)
+		layout.addLayout(hbox_algo)
+		layout.addWidget(self.label_algoout)
+		layout.addWidget(self.text_algoout)
+
+	@pyqtSlot(QtCore.QModelIndex)
+	def slot_pressed(self, index):
+		if QtGui.QApplication.mouseButtons() & Qt.RightButton:
+			action_configure = QtGui.QAction("Configure...", self)
+			action_configure.setEnabled(False)
+			action_remove = QtGui.QAction("Remove", self)
+			action_remove.setEnabled(False)
+			menu = QtGui.QMenu()
+			menu.addAction(action_configure)
+			menu.addSeparator()
+			menu.addAction(action_remove)
+			menu.exec_(QtGui.QCursor.pos())
+
+	@pyqtSlot(QtCore.QString)
+	def slot_tracing(self, s):
+		self.tracing = s
+
+	@pyqtSlot(QtCore.QString)
+	def slot_algorithm(self, s):
+		self.algorithm = s
+
+	@pyqtSlot(int)
+	def slot_changed_av(self, v):
+		self.targetav = v / 100.0
+
+	@pyqtSlot(int)
+	def slot_changed_c(self, v):
+		self.targetc = v
+
+	@pyqtSlot(int)
+	def slot_changed_p(self, v):
+		self.targetp = v / 100.0
+
+	@pyqtSlot(int)
+	def slot_changed_runtime(self, v):
+		self.targetruntime = v * 1000.0
+
+	@pyqtSlot()
+	def slot_calculate(self):
+		debug = False
+		internaldebug = False
+		if self.tracing in ("Important", "All"):
+			debug = True
+		if self.tracing == "All":
+			internaldebug = True
+
+		t_start = time.time()
+
+		mode = None
+		if not self.algorithm:
+			mode = "fixed"
+		if self.algorithm == "Fixed":
+			mode = "fixed"
+		elif self.algorithm == "Proportional":
+			mode = "proportional"
+		elif self.algorithm == "Combinatorial":
+			mode = "combinatory"
+		elif self.algorithm == "PICav":
+			mode = "picav"
+		elif self.algorithm == "PICav+":
+			# FIXME: not implemented yet
+			mode = "picav"
+
+		if mode in ("fixed", "proportional"):
+			fp = FixedProportional()
+			oav = fp.fixedproportional(self.services, self.targetav, mode)
+		elif mode == "picav":
+			picav = PICav(debug=debug, internaldebug=internaldebug, debugout=False)
+			oav = picav.picav(self.services, self.targetav, maxiterations=15, factor=1)
+		elif mode == "combinatory":
+			combinatory = Combinatory()
+			bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(self.services, self.targetav)
+			oav = bestoav
+		else:
+			return
+
+		t_stop = time.time()
+
+		t_diff = (t_stop - t_start) * 1000
+
+		modelitem = self.qtv.model().invisibleRootItem()
+		for i in range(len(self.services)):
+			modelitem.child(i, 4).setText("")
+
+		if oav:
+			for service in self.services:
+				#items = modelitem.findItems(service.name)
+				for i in range(len(self.services)):
+					item = modelitem.child(i, 0)
+					if item.text() == service.name:
+						modelitem.child(i, 4).setText("1+%i" % service.redundant)
+
+			price = sum([x.price for x in self.services])
+			m = sum(s.redundant for s in self.services)
+			k = len(self.services)
+			overhead = float(k + m) / k - 1.0
+			self.label_algoout.setText("av:%3.4f%% c-o:%3.2f%% p:%3.2f [time:%3.2f ms]" % (oav * 100, overhead * 100, price, t_diff))
+			if debug:
+				self.text_algoout.setText(picav.getlog())
+			else:
+				self.text_algoout.setText("")
+		else:
+			self.label_algoout.setText("--")
+			self.text_algoout.setText("")
+
+	def setup(self):
+		model = self.qtv.model()
+
+		self.setupcontent(model.invisibleRootItem())
+
+		self.qtv.expandAll()
+		for i in range(model.columnCount()):
+			self.qtv.resizeColumnToContents(i)
+
+	def setupcontent(self, modelitem):
+		for service in self.services:
+			serviceitem = QtGui.QStandardItem(QtGui.QIcon("cloudfolder.png"), service.name)
+			serviceitem.setEditable(False)
+			av = QtGui.QStandardItem("%3.2f" % (service.availability * 100) + " %/a")
+			av.setEditable(False)
+			if service.capacity == 0:
+				cs = "unlimited/elastic"
+			else:
+				cs = "%i" % service.capacity + " GB"
+			if service.price < 0.0001:
+				ps = "free"
+			else:
+				ps = "%3.2f" % service.price + " ¢/GBy"
+			c = QtGui.QStandardItem(cs)
+			c.setEditable(False)
+			p = QtGui.QStandardItem(ps)
+			p.setEditable(False)
+			r = QtGui.QStandardItem("%i" % service.redundant)
+			r.setEditable(False)
+			modelitem.appendRow((serviceitem, av, c, p, r))
+
+	def load(self, filename):
+		sg = ServiceGenerator()
+		if filename:
+			self.services = sg.loadservices(filename)
+		else:
+			self.services = sg.genservices(10)
+		self.setup()
+
+	def keyPressEvent(self, event):
+		if event.key() == Qt.Key_Escape:
+			self.close()
+
+QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("UTF-8"))
+
+app = QtGui.QApplication(sys.argv)
+pav = PICavVis()
+if len(sys.argv) == 2:
+	pav.load(sys.argv[1])
+else:
+	pav.load(None)
+pav.move(350, 200)
+pav.show()
+sys.exit(app.exec_())
