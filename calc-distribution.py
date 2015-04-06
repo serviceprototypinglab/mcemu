@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|picav|picav
+# Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|picav|combinatory|all
 
 import sys
 import time
