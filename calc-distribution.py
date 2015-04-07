@@ -15,6 +15,9 @@ from mcsalgorithms.picav import PICav
 def calculatedistribution(services, target, mode):
 	t_start = time.time()
 
+	for service in services:
+		service.redundant = 0
+
 	if mode in ("fixed", "proportional"):
 		fp = FixedProportional()
 		oav = fp.fixedproportional(services, target, mode)
