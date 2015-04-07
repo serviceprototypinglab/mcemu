@@ -12,7 +12,7 @@ from mcsalgorithms.fixedproportional import FixedProportional
 from mcsalgorithms.combinatory import Combinatory
 from mcsalgorithms.picav import PICav
 
-def calculatedistribution(services, target, mode):
+def calculatedistribution(services, target, mode, submode=None):
 	t_start = time.time()
 
 	for service in services:
@@ -20,7 +20,7 @@ def calculatedistribution(services, target, mode):
 
 	if mode in ("fixed", "proportional"):
 		fp = FixedProportional()
-		oav = fp.fixedproportional(services, target, mode)
+		oav = fp.fixedproportional(services, target, mode, submode)
 	elif mode == "picav":
 		picav = PICav(debug=False)
 		oav = picav.picav(services, target)
@@ -45,7 +45,10 @@ def calculatedistribution(services, target, mode):
 		else:
 			oav = "%3.4f" % oav
 		result = "error, no solution found; discarding availability=%s" % oav
-	print "Service distribution [algorithm: %12s time:%7.2f]: %s" % (mode, t_diff, result)
+	submodestr = "   "
+	if submode:
+		submodestr = "[%s]" % submode[0]
+	print "Service distribution [algorithm: %12s%3s time:%7.2f]: %s" % (mode, submodestr, t_diff, result)
 
 if len(sys.argv) != 4:
 	print >>sys.stderr, "Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|combinatory|picav|all"
@@ -66,7 +69,9 @@ mode = sys.argv[3]
 if mode in ("fixed", "all"):
 	calculatedistribution(services, targetavailability, "fixed")
 if mode in ("proportional", "all"):
-	calculatedistribution(services, targetavailability, "proportional")
+	calculatedistribution(services, targetavailability, "proportional", submode="availability")
+	calculatedistribution(services, targetavailability, "proportional", submode="capacity")
+	calculatedistribution(services, targetavailability, "proportional", submode="price")
 if mode in ("combinatory", "all"):
 	calculatedistribution(services, targetavailability, "combinatory")
 if mode in ("picav", "all"):
