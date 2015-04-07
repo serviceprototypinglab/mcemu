@@ -15,7 +15,7 @@ class Service:
 		self.capacity = capacity
 
 	def __repr__(self):
-		return "S[%s:av=%3.4f,r=%i,p=%3.2f]" % (self.name, self.availability, self.redundant, self.price)
+		return "S[%s:av=%3.4f,r=%i,p=%3.2f,c=%i]" % (self.name, self.availability, self.redundant, self.price, self.capacity)
 
 class ServiceSet:
 	def __init__(self, services, debug=True, debugout=True):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|picav|combinatory|all
+# Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|picav|picav+|combinatory|all
 
 import sys
 import time
@@ -11,6 +11,7 @@ from mcsalgorithms.servicegen import ServiceGenerator
 from mcsalgorithms.fixedproportional import FixedProportional
 from mcsalgorithms.combinatory import Combinatory
 from mcsalgorithms.picav import PICav
+from mcsalgorithms.picavplus import PICavPlus
 
 def calculatedistribution(services, target, mode, submode=None):
 	t_start = time.time()
@@ -24,6 +25,9 @@ def calculatedistribution(services, target, mode, submode=None):
 	elif mode == "picav":
 		picav = PICav(debug=False)
 		oav = picav.picav(services, target)
+	elif mode == "picav+":
+		picavplus = PICavPlus(debug=True, debugout=True)
+		oav = picavplus.picavplus(services, submode)
 	elif mode == "combinatory":
 		combinatory = Combinatory()
 		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, target)
@@ -76,3 +80,7 @@ if mode in ("combinatory", "all"):
 	calculatedistribution(services, targetavailability, "combinatory")
 if mode in ("picav", "all"):
 	calculatedistribution(services, targetavailability, "picav")
+if mode in ("picav+", "all"):
+	calculatedistribution(services, targetavailability, "picav+", submode="availability")
+	calculatedistribution(services, targetavailability, "picav+", submode="capacity")
+	calculatedistribution(services, targetavailability, "picav+", submode="price")
