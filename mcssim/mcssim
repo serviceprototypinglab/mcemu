@@ -176,7 +176,7 @@ class PICavVis(QtGui.QWidget):
 			mode = "picav"
 
 		if mode in ("fixed", "proportional"):
-			fp = FixedProportional()
+			fp = FixedProportional(debug=debug, debugout=False)
 			oav = fp.fixedproportional(self.services, self.targetav, mode)
 		elif mode == "picav":
 			picav = PICav(debug=debug, internaldebug=internaldebug, debugout=False)

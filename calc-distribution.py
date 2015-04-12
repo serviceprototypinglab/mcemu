@@ -20,13 +20,13 @@ def calculatedistribution(services, target, mode, submode=None):
 		service.redundant = 0
 
 	if mode in ("fixed", "proportional"):
-		fp = FixedProportional()
+		fp = FixedProportional(debug=False, debugout=False)
 		oav = fp.fixedproportional(services, target, mode, submode)
 	elif mode == "picav":
-		picav = PICav(debug=False)
+		picav = PICav(debug=False, debugout=False)
 		oav = picav.picav(services, target)
 	elif mode == "picav+":
-		picavplus = PICavPlus(debug=True, debugout=True)
+		picavplus = PICavPlus(debug=False, debugout=False)
 		oav = picavplus.picavplus(services, submode)
 	elif mode == "combinatory":
 		combinatory = Combinatory()
@@ -55,7 +55,7 @@ def calculatedistribution(services, target, mode, submode=None):
 	print "Service distribution [algorithm: %12s%3s time:%7.2f]: %s" % (mode, submodestr, t_diff, result)
 
 if len(sys.argv) != 4:
-	print >>sys.stderr, "Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|combinatory|picav|all"
+	print >>sys.stderr, "Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|combinatory|picav|picav+|all"
 	sys.exit(1)
 
 sg = ServiceGenerator()
