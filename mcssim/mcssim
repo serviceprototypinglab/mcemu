@@ -14,6 +14,7 @@ from mcsalgorithms.fixedproportional import FixedProportional
 from mcsalgorithms.combinatory import Combinatory
 from mcsalgorithms.picav import PICav
 from mcsalgorithms.picavplus import PICavPlus
+from mcsalgorithms.staggered import Staggered
 
 class PICavVis(QtGui.QWidget):
 	def __init__(self, parent=None):
@@ -68,6 +69,7 @@ class PICavVis(QtGui.QWidget):
 		combo_algo.addItem("Fixed")
 		combo_algo.addItem("Proportional")
 		combo_algo.addItem("Combinatorial")
+		combo_algo.addItem("Staggered")
 		combo_algo.addItem("PICav")
 		combo_algo.addItem("PICav+")
 		self.connect(combo_algo, QtCore.SIGNAL("activated(QString)"), self, QtCore.SLOT("slot_algorithm(QString)"))
@@ -174,6 +176,8 @@ class PICavVis(QtGui.QWidget):
 			mode = "picav"
 		elif self.algorithm == "PICav+":
 			mode = "picav+"
+		elif self.algorithm == "Staggered":
+			mode = "staggered"
 
 		if mode in ("fixed", "proportional"):
 			distributionmethod = FixedProportional(debug=debug, debugout=False)
@@ -188,6 +192,12 @@ class PICavVis(QtGui.QWidget):
 			distributionmethod = Combinatory()
 			bestprice, firsttime, firstprice, bests, bestk, bestoav = distributionmethod.combinatory(self.services, self.targetav)
 			oav = bestoav
+		elif mode == "staggered":
+			distributionmethod = Staggered(debug=debug, internaldebug=internaldebug, debugout=False)
+			distributions = distributionmethod.staggered(self.services, self.targetav, self.targetc, shortlist=True)
+			oav = None
+			if len(distributions) >= 1:
+				oav = distributions[distributions.keys()[0]][1]
 		else:
 			return
 

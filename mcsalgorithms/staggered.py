@@ -42,6 +42,8 @@ class Staggered:
 			for k in range(1, len(services) + 1):
 				av = ss.availability(k)
 				cap = k * dispslice
+				if cap == 0:
+					cap = 10000 # fake elastic scaling to unlimited capacity
 				self.log("  - k %i -> slice availability %3.4f effective slice capacity %i" % (k, av, cap))
 				sliceconfig.append((av, cap, services, k))
 			sliceconfigurations.append(sliceconfig)

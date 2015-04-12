@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|picav|picav+|combinatory|all
+# Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|picav|picav+|combinatory|staggered|all
 
 import sys
 import time
@@ -12,8 +12,9 @@ from mcsalgorithms.fixedproportional import FixedProportional
 from mcsalgorithms.combinatory import Combinatory
 from mcsalgorithms.picav import PICav
 from mcsalgorithms.picavplus import PICavPlus
+from mcsalgorithms.staggered import Staggered
 
-def calculatedistribution(services, target, mode, submode=None):
+def calculatedistribution(services, target, mode, submode=None, targetcapacity=0):
 	t_start = time.time()
 
 	for service in services:
@@ -32,6 +33,12 @@ def calculatedistribution(services, target, mode, submode=None):
 		combinatory = Combinatory()
 		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, target)
 		oav = bestoav
+	elif mode == "staggered":
+		staggered = Staggered(debug=False, debugout=False)
+		distributions = staggered.staggered(services, target, targetcapacity, shortlist=True)
+		oav = None
+		if len(distributions) >= 1:
+			oav = distributions[distributions.keys()[0]][1]
 	else:
 		return
 
@@ -54,8 +61,8 @@ def calculatedistribution(services, target, mode, submode=None):
 		submodestr = "[%s]" % submode[0]
 	print "Service distribution [algorithm: %12s%3s time:%7.2f]: %s" % (mode, submodestr, t_diff, result)
 
-if len(sys.argv) != 4:
-	print >>sys.stderr, "Syntax: calc-distribution.py <inifile>|generated <availability> {algorithm:} fixed|proportional|combinatory|picav|picav+|all"
+if len(sys.argv) != 5:
+	print >>sys.stderr, "Syntax: calc-distribution.py <inifile>|generated <availability> <capacity> {algorithm:} fixed|proportional|combinatory|staggered|picav|picav+|all"
 	sys.exit(1)
 
 sg = ServiceGenerator()
@@ -68,7 +75,9 @@ targetavailability = float(sys.argv[2])
 if targetavailability > 1.0:
 	targetavailability /= 100.0
 
-mode = sys.argv[3]
+targetcapacity = int(sys.argv[3])
+
+mode = sys.argv[4]
 
 if mode in ("fixed", "all"):
 	calculatedistribution(services, targetavailability, "fixed")
@@ -78,6 +87,8 @@ if mode in ("proportional", "all"):
 	calculatedistribution(services, targetavailability, "proportional", submode="price")
 if mode in ("combinatory", "all"):
 	calculatedistribution(services, targetavailability, "combinatory")
+if mode in ("staggered", "all"):
+	calculatedistribution(services, targetavailability, "staggered", targetcapacity=targetcapacity)
 if mode in ("picav", "all"):
 	calculatedistribution(services, targetavailability, "picav")
 if mode in ("picav+", "all"):
