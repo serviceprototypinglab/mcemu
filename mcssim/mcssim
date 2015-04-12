@@ -13,6 +13,7 @@ from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.fixedproportional import FixedProportional
 from mcsalgorithms.combinatory import Combinatory
 from mcsalgorithms.picav import PICav
+from mcsalgorithms.picavplus import PICavPlus
 
 class PICavVis(QtGui.QWidget):
 	def __init__(self, parent=None):
@@ -172,18 +173,20 @@ class PICavVis(QtGui.QWidget):
 		elif self.algorithm == "PICav":
 			mode = "picav"
 		elif self.algorithm == "PICav+":
-			# FIXME: not implemented yet
-			mode = "picav"
+			mode = "picav+"
 
 		if mode in ("fixed", "proportional"):
-			fp = FixedProportional(debug=debug, debugout=False)
-			oav = fp.fixedproportional(self.services, self.targetav, mode)
+			distributionmethod = FixedProportional(debug=debug, debugout=False)
+			oav = distributionmethod.fixedproportional(self.services, self.targetav, mode)
 		elif mode == "picav":
-			picav = PICav(debug=debug, internaldebug=internaldebug, debugout=False)
-			oav = picav.picav(self.services, self.targetav, maxiterations=15, factor=1)
+			distributionmethod = PICav(debug=debug, internaldebug=internaldebug, debugout=False)
+			oav = distributionmethod.picav(self.services, self.targetav, maxiterations=15, factor=1)
+		elif mode == "picav+":
+			distributionmethod = PICavPlus(debug=debug, internaldebug=internaldebug, debugout=False)
+			oav = distributionmethod.picavplus(self.services, "availability")
 		elif mode == "combinatory":
-			combinatory = Combinatory()
-			bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(self.services, self.targetav)
+			distributionmethod = Combinatory()
+			bestprice, firsttime, firstprice, bests, bestk, bestoav = distributionmethod.combinatory(self.services, self.targetav)
 			oav = bestoav
 		else:
 			return
@@ -209,8 +212,8 @@ class PICavVis(QtGui.QWidget):
 			k = len(self.services)
 			overhead = float(k + m) / k - 1.0
 			self.label_algoout.setText("av:%3.4f%% c-o:%3.2f%% p:%3.2f [time:%3.2f ms]" % (oav * 100, overhead * 100, price, t_diff))
-			if debug:
-				self.text_algoout.setText(picav.getlog())
+			if debug and "getlog" in dir(distributionmethod):
+				self.text_algoout.setText(distributionmethod.getlog())
 			else:
 				self.text_algoout.setText("")
 		else:
