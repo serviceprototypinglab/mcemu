@@ -62,7 +62,7 @@ class Staggered:
 				av, cap, services, k = dispslice
 				allav += av * cap
 				allcap += cap
-				allservices.append((services, k))
+				allservices.append((services, k, cap))
 				allservicesreadable.append(([s.name for s in services], k))
 			allav /= allcap
 			if allav >= minav and allcap >= mincap:
@@ -101,5 +101,17 @@ class Staggered:
 
 		for variant in distributions.keys():
 			self.log("%s%s -- av %3.4f / cap %i%s" % (color_yellow, variant, distributions[variant][1], distributions[variant][2], color_reset))
+
+			allservices = distributions[variant][0]
+			redundancies = {}
+			for services, k, cap in allservices:
+				#print "**", services, k, cap
+				for service in services:
+					redundancies[service] = redundancies.get(service, 0) + (len(services) - k) * cap
+			for service in redundancies.keys():
+				redundancy = float(redundancies[service])
+				redundancy /= allcap
+				service.redundant = redundancy
+				self.log("Redundancy: %s = %3.2f" % (service, redundancy))
 
 		return distributions
