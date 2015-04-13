@@ -63,7 +63,10 @@ def calculatedistribution(services, target, mode, submode=None, targetcapacity=0
 	for service in services:
 		if dist != "":
 			dist += ","
-		dist += "1+%i" % service.redundant
+		if service.redundant > 0 and service.redundant < 1:
+			dist += "1+x"
+		else:
+			dist += "1+%i" % service.redundant
 	print "Distribution [algorithm: %12s%3s time:%7.2f]: {%s} %s" % (mode, submodestr, t_diff, dist, result)
 
 if len(sys.argv) != 5:

@@ -49,6 +49,9 @@ class Staggered:
 			sliceconfigurations.append(sliceconfig)
 			dispslicetotal += dispslice
 			services = [s for s in services if s.capacity != dispslicetotal]
+			# Opportunistic shortcut: Stagger only until minimum capacity is met
+			if dispslice >= mincap:
+				services = []
 
 		# Cartesian product over all slice configurations
 		configurations = list(itertools.product(*sliceconfigurations))
