@@ -14,27 +14,27 @@ from mcsalgorithms.picav import PICav
 from mcsalgorithms.picavplus import PICavPlus
 from mcsalgorithms.staggered import Staggered
 
-def calculatedistribution(services, target, mode, submode=None, targetcapacity=0):
+def calculatedistribution(services, target, mode, submode=None, targetcapacity=0, debug=False):
 	t_start = time.time()
 
 	for service in services:
 		service.redundant = 0
 
 	if mode in ("fixed", "proportional"):
-		fp = FixedProportional(debug=False, debugout=False)
+		fp = FixedProportional(debug=debug, debugout=False)
 		oav = fp.fixedproportional(services, target, mode, submode)
 	elif mode == "picav":
-		picav = PICav(debug=False, debugout=False)
+		picav = PICav(debug=debug, debugout=False)
 		oav = picav.picav(services, target)
 	elif mode == "picav+":
-		picavplus = PICavPlus(debug=False, debugout=False)
+		picavplus = PICavPlus(debug=debug, debugout=False)
 		oav = picavplus.picavplus(services, submode)
 	elif mode == "combinatory":
 		combinatory = Combinatory()
 		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, target)
 		oav = bestoav
 	elif mode == "staggered":
-		staggered = Staggered(debug=False, debugout=False)
+		staggered = Staggered(debug=debug, debugout=True)
 		distributions = staggered.staggered(services, target, targetcapacity, shortlist=True)
 		oav = None
 		if len(distributions) >= 1:
@@ -59,7 +59,12 @@ def calculatedistribution(services, target, mode, submode=None, targetcapacity=0
 	submodestr = "   "
 	if submode:
 		submodestr = "[%s]" % submode[0]
-	print "Service distribution [algorithm: %12s%3s time:%7.2f]: %s" % (mode, submodestr, t_diff, result)
+	dist = ""
+	for service in services:
+		if dist != "":
+			dist += ","
+		dist += "1+%i" % service.redundant
+	print "Distribution [algorithm: %12s%3s time:%7.2f]: {%s} %s" % (mode, submodestr, t_diff, dist, result)
 
 if len(sys.argv) != 5:
 	print >>sys.stderr, "Syntax: calc-distribution.py <inifile>|generated <availability> <capacity> {algorithm:} fixed|proportional|combinatory|staggered|picav|picav+|all"
@@ -79,19 +84,23 @@ targetcapacity = int(sys.argv[3])
 
 mode = sys.argv[4]
 
+debug = True
+if mode == "all":
+	debug = False
+
 if mode in ("fixed", "all"):
-	calculatedistribution(services, targetavailability, "fixed")
+	calculatedistribution(services, targetavailability, "fixed", debug=debug)
 if mode in ("proportional", "all"):
-	calculatedistribution(services, targetavailability, "proportional", submode="availability")
-	calculatedistribution(services, targetavailability, "proportional", submode="capacity")
-	calculatedistribution(services, targetavailability, "proportional", submode="price")
+	calculatedistribution(services, targetavailability, "proportional", submode="availability", debug=debug)
+	calculatedistribution(services, targetavailability, "proportional", submode="capacity", debug=debug)
+	calculatedistribution(services, targetavailability, "proportional", submode="price", debug=debug)
 if mode in ("combinatory", "all"):
-	calculatedistribution(services, targetavailability, "combinatory")
+	calculatedistribution(services, targetavailability, "combinatory", debug=debug)
 if mode in ("staggered", "all"):
-	calculatedistribution(services, targetavailability, "staggered", targetcapacity=targetcapacity)
+	calculatedistribution(services, targetavailability, "staggered", targetcapacity=targetcapacity, debug=debug)
 if mode in ("picav", "all"):
-	calculatedistribution(services, targetavailability, "picav")
+	calculatedistribution(services, targetavailability, "picav", debug=debug)
 if mode in ("picav+", "all"):
-	calculatedistribution(services, targetavailability, "picav+", submode="availability")
-	calculatedistribution(services, targetavailability, "picav+", submode="capacity")
-	calculatedistribution(services, targetavailability, "picav+", submode="price")
+	calculatedistribution(services, targetavailability, "picav+", submode="availability", debug=debug)
+	calculatedistribution(services, targetavailability, "picav+", submode="capacity", debug=debug)
+	calculatedistribution(services, targetavailability, "picav+", submode="price", debug=debug)
