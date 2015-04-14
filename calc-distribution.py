@@ -18,6 +18,8 @@ from mcsalgorithms.staggered import Staggered
 def calculatedistribution(services, targetavailability, mode, submode=None, targetcapacity=0, targetprice=-1, maxruntime=-1, debug=False):
 	t_start = time.time()
 
+	bestprice = None
+
 	for service in services:
 		service.redundant = 0
 
@@ -43,6 +45,7 @@ def calculatedistribution(services, targetavailability, mode, submode=None, targ
 		oav = None
 		if len(distributions) >= 1:
 			oav = distributions[distributions.keys()[0]][1]
+			bestprice = sum([s.price for s in distributions[distributions.keys()[0]][0][0][0]])
 	else:
 		return
 
@@ -51,7 +54,10 @@ def calculatedistribution(services, targetavailability, mode, submode=None, targ
 	t_diff = (t_stop - t_start) * 1000.0
 
 	if oav and oav >= targetavailability:
-		price = sum([s.price for s in services])
+		if bestprice:
+			price = bestprice
+		else:
+			price = sum([s.price for s in services])
 		overhead = float(len(services) + sum([s.redundant for s in services])) / len(services) - 1.0
 		result = "availability=%3.4f price=%3.2f capacity-overhead=%3.2f" % (oav, price, overhead)
 	else:
@@ -90,7 +96,7 @@ if targetavailability > 1.0:
 	targetavailability /= 100.0
 
 targetcapacity = int(sys.argv[3])
-targetprice = int(sys.argv[4])
+targetprice = float(sys.argv[4])
 
 maxruntime = float(sys.argv[5])
 

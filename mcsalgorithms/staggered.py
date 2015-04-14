@@ -23,14 +23,14 @@ class Staggered:
 	def getlog(self):
 		return self.logtext
 
-	def staggeredcombinatoric(self, services, minav=0.0, mincap=0, minprice=0, shortlist=True):
+	def staggeredcombinatoric(self, services, minav=0.0, mincap=0, maxprice=-1, shortlist=True):
 		powerset = itertools.chain.from_iterable(itertools.combinations(services, r) for r in range(0, len(services) + 1))
 		combinatoricdistributionscandidates = []
 		combinatoricdistributions = {}
 		for serviceset in powerset:
 			if len(serviceset) > 0:
 				self.log("staggered set: %s" % str(serviceset))
-				distributions = self.staggered(serviceset, minav, mincap, minprice, shortlist)
+				distributions = self.staggered(serviceset, minav, mincap, maxprice, shortlist)
 				self.log("staggered result: %s" % str(distributions))
 				combinatoricdistributionscandidates += distributions.values()
 		if shortlist:
@@ -49,7 +49,7 @@ class Staggered:
 			self.log("complete staggered result: %s" % str(combinatoricdistributions))
 		return combinatoricdistributions
 
-	def staggered(self, services, minav=0.0, mincap=0, minprice=0, shortlist=True):
+	def staggered(self, services, minav=0.0, mincap=0, maxprice=-1, shortlist=True):
 		color_red = "\033[91m"
 		color_green = "\033[92m"
 		color_yellow = "\033[93m"
@@ -65,13 +65,14 @@ class Staggered:
 			self.log("- dispslice %i over %i nodes" % (dispslice, len(services)))
 			ss = ServiceSet(services, debug=self.internaldebug)
 			sliceconfig = []
+			price = sum([s.price for s in services]) * dispslice * len(services)
 			for k in range(1, len(services) + 1):
 				av = ss.availability(k)
 				cap = k * dispslice
 				if cap == 0:
 					cap = 10000 # fake elastic scaling to unlimited capacity
-				self.log("  - k %i -> slice availability %3.4f effective slice capacity %i" % (k, av, cap))
-				sliceconfig.append((av, cap, services, k))
+				self.log("  - k %i -> slice availability %3.4f effective slice capacity %i price %3.2f" % (k, av, cap, price))
+				sliceconfig.append((av, cap, price, services, k))
 			sliceconfigurations.append(sliceconfig)
 			dispslicetotal += dispslice
 			services = [s for s in services if s.capacity != dispslicetotal]
@@ -84,17 +85,20 @@ class Staggered:
 		for config in configurations:
 			allcap = 0
 			allav = 0.0
+			allprice = 0.0
 			allservices = []
 			allservicesreadable = []
 			# Weighted availability over the slices of the configuration
 			for dispslice in config:
-				av, cap, services, k = dispslice
+				av, cap, price, services, k = dispslice
 				allav += av * cap
+				allprice += price
 				allcap += cap
 				allservices.append((services, k, cap))
 				allservicesreadable.append(([s.name for s in services], k))
 			allav /= allcap
-			if allav >= minav and allcap >= mincap:
+			allprice /= allcap
+			if allav >= minav and allcap >= mincap and (maxprice == -1 or allprice <= maxprice):
 				rating = "%s%3s%s" % (color_green, "ok", color_reset)
 				if shortlist:
 					if len(distributions) == 0:
