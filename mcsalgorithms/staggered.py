@@ -23,14 +23,14 @@ class Staggered:
 	def getlog(self):
 		return self.logtext
 
-	def staggeredcombinatoric(self, services, minav=0.0, mincap=0, shortlist=True):
+	def staggeredcombinatoric(self, services, minav=0.0, mincap=0, minprice=0, shortlist=True):
 		powerset = itertools.chain.from_iterable(itertools.combinations(services, r) for r in range(0, len(services) + 1))
 		combinatoricdistributionscandidates = []
 		combinatoricdistributions = {}
 		for serviceset in powerset:
 			if len(serviceset) > 0:
 				self.log("staggered set: %s" % str(serviceset))
-				distributions = self.staggered(serviceset, minav, mincap, shortlist)
+				distributions = self.staggered(serviceset, minav, mincap, minprice, shortlist)
 				self.log("staggered result: %s" % str(distributions))
 				combinatoricdistributionscandidates += distributions.values()
 		if shortlist:
@@ -49,7 +49,7 @@ class Staggered:
 			self.log("complete staggered result: %s" % str(combinatoricdistributions))
 		return combinatoricdistributions
 
-	def staggered(self, services, minav=0.0, mincap=0, shortlist=True):
+	def staggered(self, services, minav=0.0, mincap=0, minprice=0, shortlist=True):
 		color_red = "\033[91m"
 		color_green = "\033[92m"
 		color_yellow = "\033[93m"

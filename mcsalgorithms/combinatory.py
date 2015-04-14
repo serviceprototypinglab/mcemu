@@ -13,7 +13,7 @@ class Combinatory:
 	def __init__(self):
 		pass
 
-	def combinatory(self, services, target):
+	def combinatory(self, services, target, maxruntime=-1):
 		sservices = set(services)
 		powerset = itertools.chain.from_iterable(itertools.combinations(services, r) for r in range(1, len(services) + 1))
 		powersetlist = list(powerset)
@@ -24,6 +24,9 @@ class Combinatory:
 		bestoav = 0
 		firstprice = None
 		firsttime = None
+
+		inittime = time.time()
+		interrupted = False
 
 		for s in powersetlist:
 			for k in range(1, len(s) + 1):
@@ -44,5 +47,14 @@ class Combinatory:
 					hit = 0
 					price = 0
 				#print "> %i,%i,%3.4f,%i,%3.2f" % (len(s), k, oav, hit, price)
+
+				if maxruntime != -1:
+					nowtime = time.time()
+					if nowtime - inittime > maxruntime:
+						interrupted = True
+						break
+
+			if interrupted:
+				break
 
 		return bestprice, firsttime, firstprice, bests, bestk, bestoav
