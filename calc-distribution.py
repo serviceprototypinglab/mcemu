@@ -35,7 +35,7 @@ def calculatedistribution(services, target, mode, submode=None, targetcapacity=0
 		oav = bestoav
 	elif mode == "staggered":
 		staggered = Staggered(debug=debug, debugout=True)
-		distributions = staggered.staggered(services, target, targetcapacity, shortlist=True)
+		distributions = staggered.staggeredcombinatoric(services, target, targetcapacity, shortlist=True)
 		oav = None
 		if len(distributions) >= 1:
 			oav = distributions[distributions.keys()[0]][1]

@@ -23,6 +23,32 @@ class Staggered:
 	def getlog(self):
 		return self.logtext
 
+	def staggeredcombinatoric(self, services, minav=0.0, mincap=0, shortlist=True):
+		powerset = itertools.chain.from_iterable(itertools.combinations(services, r) for r in range(0, len(services) + 1))
+		combinatoricdistributionscandidates = []
+		combinatoricdistributions = {}
+		for serviceset in powerset:
+			if len(serviceset) > 0:
+				self.log("staggered set: %s" % str(serviceset))
+				distributions = self.staggered(serviceset, minav, mincap, shortlist)
+				self.log("staggered result: %s" % str(distributions))
+				combinatoricdistributionscandidates += distributions.values()
+		if shortlist:
+			if len(combinatoricdistributionscandidates) == 1:
+				combinatoricdistributions["default"] = combinatoricdistributionscandidates[0]
+			else:
+				for candidate in combinatoricdistributionscandidates:
+					if not "capacity" in combinatoricdistributions or candidate[2] > combinatoricdistributions["capacity"][2]:
+						combinatoricdistributions["capacity"] = candidate
+					if not "availability" in combinatoricdistributions or candidate[2] > combinatoricdistributions["availability"][1]:
+						combinatoricdistributions["availability"] = candidate
+			self.log("shortlisted staggered result: %s" % str(combinatoricdistributions))
+		else:
+			for candidate in combinatoricdistributionscandidates:
+				combinatoricdistributions["CD%i" % len(combinatoricdistributions)] = candidate
+			self.log("complete staggered result: %s" % str(combinatoricdistributions))
+		return combinatoricdistributions
+
 	def staggered(self, services, minav=0.0, mincap=0, shortlist=True):
 		color_red = "\033[91m"
 		color_green = "\033[92m"
