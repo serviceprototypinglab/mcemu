@@ -5,6 +5,7 @@
 # or k>1: *dispersed* data with/without redundancy, i.e. k/k-m (m<k?) needs to be available
 
 import itertools
+import random
 
 class Service:
 	def __init__(self, name, availability=1.0, redundant=0, price=0, capacity=0):
@@ -23,6 +24,43 @@ class ServiceSet:
 		self.debug = debug
 		self.debugout = debugout
 		self.logtext = ""
+
+	def availabilitymontecarlo(self, k=1):
+		numservices = len(self.services)
+
+		# 50% redundancy assumed; n=k*1.5
+		for i, service in enumerate(self.services):
+			#service.redundant = i % 2
+			service.redundant = 0
+
+		om = len(self.services)
+		probs = []
+
+		for om in range(1, 2 ** numservices + 1):
+			for trial in range(10):
+				samples = []
+				for i in range(om):
+					sample = random.randint(0, 2 ** numservices - 1)
+					samples.append(sample)
+
+				prob = 0.0
+				for sample in samples:
+					#print "STATES:", sample
+					for i in range(numservices):
+						state = (sample & (1 << i)) >> i
+						prob += (self.services[i].redundant + 1) * self.services[i].availability * state
+						#print "//prob", prob, "@state", state
+				prob /= numservices
+				prob /= om
+				probs.append(prob)
+
+			meanprob = sum(probs) / len(probs)
+			varianceprob = 0.0
+			for prob in probs:
+				varianceprob += (meanprob - prob) ** 2
+			varianceprob /= len(probs)
+
+			self.log("monte carlo samples (h/N=%i om=%i states=%i): %s => µ%3.4f/σ%3.4f" % (numservices, om, 2 ** numservices, str(samples), meanprob, varianceprob))
 
 	def availability(self, k=1):
 		if k < 1:

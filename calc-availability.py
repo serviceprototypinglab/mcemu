@@ -51,6 +51,8 @@ if sys.argv[1] == "example":
 	for k in range(1, len(services) + 1):
 		print " %s" % results[k]
 
+	#ss.availabilitymontecarlo(k=1)
+
 	if len(sys.argv) == 2:
 		if abs(oavs[1] - 0.6058) > 0.0001:
 			print "Test failed!"
