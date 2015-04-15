@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Syntax: calc-availability.py variances|availabilities|example [<inifile>]
+# Syntax: calc-availability.py variances|availabilities|precise|approximated [<inifile>]
 # See distavail.py for documentation
 
 import sys
@@ -10,11 +10,11 @@ import time
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
 
-if len(sys.argv) == 1 or sys.argv[1] not in ("example", "variances", "availabilities"):
-	print "Syntax: calc-availability.py [variances|availabilities|example] [<inifile>]"
+if len(sys.argv) == 1 or sys.argv[1] not in ("precise", "approximated", "variances", "availabilities"):
+	print "Syntax: calc-availability.py [variances|availabilities|precise|approximated] [<inifile>]"
 	sys.exit(1)
 
-if sys.argv[1] == "example":
+if sys.argv[1] in ("precise", "approximated"):
 	if len(sys.argv) == 3:
 		sg = ServiceGenerator()
 		services = sg.loadservices(sys.argv[2])
@@ -29,7 +29,7 @@ if sys.argv[1] == "example":
 	oavs = {}
 
 	for k in range(1, len(services) + 1):
-		oav = ss.availability(k=k)
+		oav = ss.availability(k=k, mode=sys.argv[1])
 
 		m = len(services) - k
 		hint = ""
@@ -44,7 +44,11 @@ if sys.argv[1] == "example":
 		elif m == k * 3:
 			hint = "/triple replication"
 
-		results[k] = "[k=%i m=%i%20s]: %3.4f" % (k, m, hint, oav)
+		approx = ""
+		if sys.argv[1] == "approximated":
+			approx = "~"
+
+		results[k] = "[k=%i m=%i%20s]: %s%3.4f" % (k, m, hint, approx, oav)
 		oavs[k] = oav
 
 	print "Overall availability:"

@@ -14,7 +14,7 @@ schemes based on their result quality and execution time.
 Simple availability calculation for a service with varying amount of
 redundancy:
 
-% ./calc-availability.py example simulations/goldstandardservices.ini
+% ./calc-availability.py precise simulations/goldstandardservices.ini
 
 Comparative execution of distribution determination schemes with certain
 limits for overall availability, capacity and price, as well as execution
