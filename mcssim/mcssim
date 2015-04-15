@@ -189,12 +189,12 @@ class PICavVis(QtGui.QWidget):
 			distributionmethod = PICavPlus(debug=debug, internaldebug=internaldebug, debugout=False)
 			oav = distributionmethod.picavplus(self.services, "availability")
 		elif mode == "combinatory":
-			distributionmethod = Combinatory()
-			bestprice, firsttime, firstprice, bests, bestk, bestoav = distributionmethod.combinatory(self.services, self.targetav)
+			distributionmethod = Combinatory(debug=debug, internaldebug=internaldebug, debugout=False)
+			bestprice, firsttime, firstprice, bests, bestk, bestoav = distributionmethod.combinatory(self.services, self.targetav, self.targetc, self.targetp, self.targetruntime)
 			oav = bestoav
 		elif mode == "staggered":
 			distributionmethod = Staggered(debug=debug, internaldebug=internaldebug, debugout=False)
-			distributions = distributionmethod.staggeredcombinatoric(self.services, self.targetav, self.targetc, shortlist=True)
+			distributions = distributionmethod.staggeredcombinatoric(self.services, self.targetav, self.targetc, self.targetp, shortlist=True)
 			oav = None
 			if len(distributions) >= 1:
 				oav = distributions[distributions.keys()[0]][1]

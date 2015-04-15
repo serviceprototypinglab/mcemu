@@ -15,7 +15,7 @@ from mcsalgorithms.picav import PICav
 from mcsalgorithms.picavplus import PICavPlus
 from mcsalgorithms.staggered import Staggered
 
-def calculatedistribution(services, targetavailability, mode, submode=None, targetcapacity=0, targetprice=-1, maxruntime=-1, debug=False):
+def calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, mode, submode, debug):
 	t_start = time.time()
 
 	bestprice = None
@@ -24,17 +24,17 @@ def calculatedistribution(services, targetavailability, mode, submode=None, targ
 		service.redundant = 0
 
 	if mode in ("fixed", "proportional"):
-		fp = FixedProportional(debug=debug, debugout=False)
+		fp = FixedProportional(debug=debug, debugout=True)
 		oav = fp.fixedproportional(services, targetavailability, mode, submode)
 	elif mode == "picav":
-		picav = PICav(debug=debug, debugout=False)
+		picav = PICav(debug=debug, debugout=True)
 		oav = picav.picav(services, targetavailability)
 	elif mode == "picav+":
-		picavplus = PICavPlus(debug=debug, debugout=False)
+		picavplus = PICavPlus(debug=debug, debugout=True)
 		oav = picavplus.picavplus(services, submode)
 	elif mode == "combinatory":
-		combinatory = Combinatory()
-		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, targetavailability, maxruntime)
+		combinatory = Combinatory(debug=debug, debugout=True)
+		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, targetavailability, targetcapacity, targetprice, maxruntime)
 		oav = bestoav
 	elif mode == "staggered":
 		staggered = Staggered(debug=debug, debugout=True)
@@ -58,8 +58,11 @@ def calculatedistribution(services, targetavailability, mode, submode=None, targ
 			price = bestprice
 		else:
 			price = sum([s.price for s in services])
-		overhead = float(len(services) + sum([s.redundant for s in services])) / len(services) - 1.0
-		result = "availability=%3.4f price=%3.2f capacity-overhead=%3.2f" % (oav, price, overhead)
+		if targetprice == -1 or price <= targetprice:
+			overhead = float(len(services) + sum([s.redundant for s in services])) / len(services) - 1.0
+			result = "availability=%3.4f price=%3.2f capacity-overhead=%3.2f" % (oav, price, overhead)
+		else:
+			result = "error, no solution found; discarding price=%3.2f" % price
 	else:
 		if not oav:
 			oav = "(none)"
@@ -111,19 +114,19 @@ if mode == "all":
 	debug = False
 
 if mode in ("fixed", "all"):
-	calculatedistribution(services, targetavailability, "fixed", debug=debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "fixed", None, debug)
 if mode in ("proportional", "all"):
-	calculatedistribution(services, targetavailability, "proportional", submode="availability", debug=debug)
-	calculatedistribution(services, targetavailability, "proportional", submode="capacity", debug=debug)
-	calculatedistribution(services, targetavailability, "proportional", submode="price", debug=debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "availability", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "capacity", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "price", debug)
 if mode in ("combinatory", "all"):
-	calculatedistribution(services, targetavailability, "combinatory", debug=debug, maxruntime=maxruntime)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "combinatory", None, debug)
 if mode in ("staggered", "all"):
-	calculatedistribution(services, targetavailability, "staggered", submode="plain", targetcapacity=targetcapacity, targetprice=targetprice, debug=debug)
-	calculatedistribution(services, targetavailability, "staggered", submode="combinatoric", targetcapacity=targetcapacity, targetprice=targetprice, debug=debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "staggered", "plain", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "staggered", "combinatoric", debug)
 if mode in ("picav", "all"):
-	calculatedistribution(services, targetavailability, "picav", debug=debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "picav", None, debug)
 if mode in ("picav+", "all"):
-	calculatedistribution(services, targetavailability, "picav+", submode="availability", debug=debug)
-	calculatedistribution(services, targetavailability, "picav+", submode="capacity", debug=debug)
-	calculatedistribution(services, targetavailability, "picav+", submode="price", debug=debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "picav+", "availability", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "picav+", "capacity", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "picav+", "price", debug)
