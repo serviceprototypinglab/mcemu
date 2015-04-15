@@ -1,0 +1,28 @@
+Multi Cloud Storage Simulation framework:
+Determination of data fragment distributions for constrained dispersal
+======================================================================
+
+Dispersing or secret-sharing fragmented data with a selective amount of
+redundancy onto heterogeneous storage or transmission targets is a challenge
+when having to determine the optimal distribution assignment. There are
+multiple determination schemes, but most do not consider all constraints,
+such as a maximum overall transmission price or elastically scalable
+storage services. The MCS simulation tools help determining the distribution
+with multiple schemes in parallel. They also allow for comparing the
+schemes based on their result quality and execution time.
+
+Simple availability calculation for a service with varying amount of
+redundancy:
+
+% ./calc-availability.py example simulations/goldstandardservices.ini
+
+Comparative execution of distribution determination schemes with certain
+limits for overall availability, capacity and price, as well as execution
+runtime:
+
+% ./calc-distribution.py generated 0.90 9 20.23 0.001 all
+
+% Graphical tool MCS-SIM to execute and analyse the schemes individually:
+
+% cd mcssim/
+% ./mcssim
