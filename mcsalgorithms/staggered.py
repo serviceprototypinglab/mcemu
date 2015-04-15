@@ -6,6 +6,7 @@
 import sys
 from distavail import Service, ServiceSet
 import itertools
+import time
 
 class Staggered:
 	def __init__(self, debug=False, internaldebug=False, debugout=False):
@@ -23,16 +24,25 @@ class Staggered:
 	def getlog(self):
 		return self.logtext
 
-	def staggeredcombinatoric(self, services, minav=0.0, mincap=0, maxprice=-1, shortlist=True):
+	def staggeredcombinatoric(self, services, minav=0.0, mincap=0, maxprice=-1, shortlist=True, maxruntime=-1):
+		inittime = time.time()
+
 		powerset = itertools.chain.from_iterable(itertools.combinations(services, r) for r in range(0, len(services) + 1))
 		combinatoricdistributionscandidates = []
 		combinatoricdistributions = {}
 		for serviceset in powerset:
 			if len(serviceset) > 0:
 				self.log("staggered set: %s" % str(serviceset))
-				distributions = self.staggered(serviceset, minav, mincap, maxprice, shortlist)
+				distributions = self.staggered(serviceset, minav, mincap, maxprice, shortlist, maxruntime)
 				self.log("staggered result: %s" % str(distributions))
 				combinatoricdistributionscandidates += distributions.values()
+
+				if maxruntime != -1:
+					nowtime = time.time()
+					if nowtime - inittime > maxruntime:
+						self.log("runtime interruption enforced")
+						break
+
 		if shortlist:
 			if len(combinatoricdistributionscandidates) == 1:
 				combinatoricdistributions["default"] = combinatoricdistributionscandidates[0]
@@ -47,9 +57,10 @@ class Staggered:
 			for candidate in combinatoricdistributionscandidates:
 				combinatoricdistributions["CD%i" % len(combinatoricdistributions)] = candidate
 			self.log("complete staggered result: %s" % str(combinatoricdistributions))
+
 		return combinatoricdistributions
 
-	def staggered(self, services, minav=0.0, mincap=0, maxprice=-1, shortlist=True):
+	def staggered(self, services, minav=0.0, mincap=0, maxprice=-1, shortlist=True, maxruntime=-1):
 		color_red = "\033[91m"
 		color_green = "\033[92m"
 		color_yellow = "\033[93m"

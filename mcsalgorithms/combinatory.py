@@ -68,6 +68,7 @@ class Combinatory:
 					nowtime = time.time()
 					if nowtime - inittime > maxruntime:
 						interrupted = True
+						self.log("runtime interruption enforced")
 						break
 
 			if interrupted:

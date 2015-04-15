@@ -34,14 +34,14 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 		oav = picavplus.picavplus(services, submode)
 	elif mode == "combinatory":
 		combinatory = Combinatory(debug=debug, debugout=True)
-		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, targetavailability, targetcapacity, targetprice, maxruntime)
+		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, targetavailability, targetcapacity, targetprice, maxruntime=maxruntime)
 		oav = bestoav
 	elif mode == "staggered":
 		staggered = Staggered(debug=debug, debugout=True)
 		if not submode or submode == "plain":
-			distributions = staggered.staggered(services, targetavailability, targetcapacity, targetprice, shortlist=True)
+			distributions = staggered.staggered(services, targetavailability, targetcapacity, targetprice, shortlist=True, maxruntime=maxruntime)
 		else:
-			distributions = staggered.staggeredcombinatoric(services, targetavailability, targetcapacity, targetprice, shortlist=True)
+			distributions = staggered.staggeredcombinatoric(services, targetavailability, targetcapacity, targetprice, shortlist=True, maxruntime=maxruntime)
 		oav = None
 		if len(distributions) >= 1:
 			oav = distributions[distributions.keys()[0]][1]
