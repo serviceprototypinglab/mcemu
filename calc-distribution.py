@@ -18,6 +18,11 @@ from mcsalgorithms.staggered import Staggered
 def calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, mode, submode, debug):
 	t_start = time.time()
 
+	color_red = "\033[91m"
+	color_green = "\033[92m"
+	color_yellow = "\033[93m"
+	color_reset = "\033[0m"
+
 	bestprice = None
 
 	for service in services:
@@ -53,6 +58,7 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 
 	t_diff = (t_stop - t_start) * 1000.0
 
+	color = color_reset
 	if oav and oav >= targetavailability:
 		if bestprice:
 			price = bestprice
@@ -63,16 +69,20 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 			if maxruntime == -1 or t_diff < maxruntime * 1000 + epsilon:
 				overhead = float(len(services) + sum([s.redundant for s in services])) / len(services) - 1.0
 				result = "availability=%3.4f price=%3.2f capacity-overhead=%3.2f" % (oav, price, overhead)
+				color = color_green
 			else:
 				result = "error, solution found but runtime exceeded by %3.2fs" % (t_diff / 1000.0 - maxruntime)
+				color = color_yellow
 		else:
 			result = "error, no solution found; discarding price=%3.2f" % price
+			color = color_red
 	else:
 		if not oav:
 			oav = "(none)"
 		else:
 			oav = "%3.4f" % oav
 		result = "error, no solution found; discarding availability=%s" % oav
+		color = color_red
 	submodestr = "    "
 	if submode:
 		submodestr = "[%s]" % submode[0:2]
@@ -84,7 +94,7 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 			dist += "1+x"
 		else:
 			dist += "1+%i" % service.redundant
-	print "Distribution [algorithm: %12s%3s time:%8.2f]: {%s} %s" % (mode, submodestr, t_diff, dist, result)
+	print "Distribution [algorithm: %s%12s%3s%s time:%8.2f]: {%s%s%s} %s%s%s" % (color, mode, submodestr, color_reset, t_diff, color, dist, color_reset, color, result, color_reset)
 
 if len(sys.argv) != 7:
 	print >>sys.stderr, "Multi cloud storage fragment distribution determination tool"
