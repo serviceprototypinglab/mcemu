@@ -25,16 +25,34 @@ if sys.argv[1] == "example":
 		services = [s1, s2, s3]
 
 	ss = ServiceSet(services, debug=True)
-	oav_tr = ss.availability(k=1)
-	oav_hr = ss.availability(k=2)
-	oav_sp = ss.availability(k=3)
+	results = {}
+	oavs = {}
+
+	for k in range(1, len(services) + 1):
+		oav = ss.availability(k=k)
+
+		m = len(services) - k
+		hint = ""
+		if m == 0:
+			hint = "/no replication"
+		elif m == k * 0.5:
+			hint = "/50% replication"
+		elif m == k:
+			hint = "/full replication"
+		elif m == k * 2:
+			hint = "/double replication"
+		elif m == k * 3:
+			hint = "/triple replication"
+
+		results[k] = "[k=%i m=%i%20s]: %3.4f" % (k, m, hint, oav)
+		oavs[k] = oav
 
 	print "Overall availability:"
-	print " [200%/triple replication k=1 m=2]:", oav_tr
-	print " [50% replication, k=2 m=1]:", oav_hr
-	print " [no replication, k=3]:", oav_sp
+	for k in range(1, len(services) + 1):
+		print " %s" % results[k]
+
 	if len(sys.argv) == 2:
-		if abs(oav_tr - 0.6058) > 0.0001:
+		if abs(oavs[1] - 0.6058) > 0.0001:
 			print "Test failed!"
 
 	sys.exit(0)
