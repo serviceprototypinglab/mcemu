@@ -15,6 +15,7 @@ from mcsalgorithms.combinatory import Combinatory
 from mcsalgorithms.picav import PICav
 from mcsalgorithms.picavplus import PICavPlus
 from mcsalgorithms.staggered import Staggered
+from mcsalgorithms.randomtargets import Random
 
 class PICavVis(QtGui.QWidget):
 	def __init__(self, parent=None):
@@ -69,6 +70,7 @@ class PICavVis(QtGui.QWidget):
 		combo_algo.addItem("Fixed")
 		combo_algo.addItem("Proportional")
 		combo_algo.addItem("Absolute")
+		combo_algo.addItem("Random")
 		combo_algo.addItem("Combinatorial")
 		combo_algo.addItem("Staggered")
 		combo_algo.addItem("PICav")
@@ -177,6 +179,8 @@ class PICavVis(QtGui.QWidget):
 			mode = "proportional"
 		elif self.algorithm == "Absolute":
 			mode = "absolute"
+		elif self.algorithm == "Random":
+			mode = "random"
 		elif self.algorithm == "Combinatorial":
 			mode = "combinatory"
 		elif self.algorithm == "PICav":
@@ -191,7 +195,10 @@ class PICavVis(QtGui.QWidget):
 
 		if mode in ("fixed", "proportional", "absolute"):
 			distributionmethod = FixedProportional(debug=debug, debugout=False)
-			oav = distributionmethod.fixedproportional(self.services, self.targetav, mode)
+			oav = distributionmethod.fixedproportional(self.services, mode)
+		elif mode == "random":
+			distributionmethod = Random(debug=debug, debugout=False)
+			oav = distributionmethod.random(self.services)
 		elif mode == "picav":
 			distributionmethod = PICav(debug=debug, internaldebug=internaldebug, debugout=False)
 			oav = distributionmethod.picav(self.services, self.targetav, maxiterations=15, factor=1)

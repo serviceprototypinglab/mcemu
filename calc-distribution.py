@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Syntax: calc-distribution.py <inifile>|generated <min-availability/0> <min-capacity/0> <max-price/-1> <max-runtime/-1> <algorithm>
-# Algorithms: fixed|proportional|absolute|picav|picav+|combinatory|staggered|all
+# Algorithms: fixed|proportional|absolute|random|picav|picav+|combinatory|staggered|all
 
 import sys
 import time
@@ -14,6 +14,7 @@ from mcsalgorithms.combinatory import Combinatory
 from mcsalgorithms.picav import PICav
 from mcsalgorithms.picavplus import PICavPlus
 from mcsalgorithms.staggered import Staggered
+from mcsalgorithms.randomtargets import Random
 
 def calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, mode, submode, debug):
 	t_start = time.time()
@@ -30,7 +31,10 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 
 	if mode in ("fixed", "proportional", "absolute"):
 		fp = FixedProportional(debug=debug, debugout=True)
-		oav = fp.fixedproportional(services, targetavailability, mode, submode)
+		oav = fp.fixedproportional(services, mode, submode)
+	elif mode == "random":
+		rt = Random(debug=debug, debugout=True)
+		oav = rt.random(services)
 	elif mode == "picav":
 		picav = PICav(debug=debug, debugout=True)
 		oav = picav.picav(services, targetavailability)
@@ -115,7 +119,7 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 if len(sys.argv) != 7:
 	print >>sys.stderr, "Multi cloud storage fragment distribution determination tool"
 	print >>sys.stderr, "Syntax: %s <inifile>|generated <min-availability/0> <min-capacity/0> <max-price/-1> <max-runtime/-1> <algorithm>" % sys.argv[0]
-	print >>sys.stderr, "Algorithms: fixed|proportional|absolute|combinatory|staggered|picav|picav+|all"
+	print >>sys.stderr, "Algorithms: fixed|proportional|absolute|random|combinatory|staggered|picav|picav+|all"
 	sys.exit(1)
 
 sg = ServiceGenerator()
@@ -157,6 +161,8 @@ if mode in ("absolute", "all"):
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "absolute", "availability", debug)
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "absolute", "capacity", debug)
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "absolute", "price", debug)
+if mode in ("random", "all"):
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "random", None, debug)
 if mode in ("combinatory", "all"):
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "combinatory", None, debug)
 if mode in ("staggered", "all"):

@@ -20,7 +20,7 @@ class FixedProportional:
 	def getlog(self):
 		return self.logtext
 
-	def fixedproportional(self, services, target, mode, submode=None):
+	def fixedproportional(self, services, mode, submode=None):
 		#multiplier = len(services) * 10
 		multiplier = len(services)
 		absservice = None
