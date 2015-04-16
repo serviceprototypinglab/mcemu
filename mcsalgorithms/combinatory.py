@@ -33,6 +33,7 @@ class Combinatory:
 		bests = 0
 		bestk = 0
 		bestoav = 0
+		bestservices = None
 		firstprice = None
 		firsttime = None
 
@@ -55,7 +56,8 @@ class Combinatory:
 							bests = len(s)
 							bestk = k
 							bestoav = oav
-							self.log("accept %s" % str(s))
+							bestservices = s
+							self.log("accept %s with k=%i" % (str(s), k))
 						else:
 							self.log("price too high %s" % str(s))
 				else:
@@ -73,5 +75,16 @@ class Combinatory:
 
 			if interrupted:
 				break
+
+		if bestservices:
+			counted = 0
+			for service in services:
+				if not service in bestservices:
+					service.fragment = 0
+				else:
+					counted += 1
+					if counted > bestk:
+						service.fragment = 0
+						service.redundant = 1
 
 		return bestprice, firsttime, firstprice, bests, bestk, bestoav

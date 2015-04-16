@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Syntax: calc-distribution.py <inifile>|generated <min-availability/0> <min-capacity/0> <max-price/-1> <max-runtime/-1> <algorithm>
-# Algorithms: fixed|proportional|picav|picav+|combinatory|staggered|all
+# Algorithms: fixed|proportional|absolute|picav|picav+|combinatory|staggered|all
 
 import sys
 import time
@@ -26,9 +26,9 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 	bestprice = None
 
 	for service in services:
-		service.redundant = 0
+		service.reset()
 
-	if mode in ("fixed", "proportional"):
+	if mode in ("fixed", "proportional", "absolute"):
 		fp = FixedProportional(debug=debug, debugout=True)
 		oav = fp.fixedproportional(services, targetavailability, mode, submode)
 	elif mode == "picav":
@@ -51,6 +51,11 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 		if len(distributions) >= 1:
 			oav = distributions[distributions.keys()[0]][1]
 			bestprice = sum([s.price for s in distributions[distributions.keys()[0]][0][0][0]])
+			# Assign lowest staggered service configuration here because only the application chooses which distribution to use
+			dist = distributions[distributions.keys()[0]][0][0][0]
+			for service in services:
+				if not service in dist:
+					service.fragment = 0
 	else:
 		return
 
@@ -63,7 +68,7 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 		if bestprice:
 			price = bestprice
 		else:
-			price = sum([s.price for s in services])
+			price = sum([s.price for s in services if (s.fragment + s.redundant) > 0])
 		if targetprice == -1 or price <= targetprice:
 			epsilon = 10.0
 			if maxruntime == -1 or t_diff < maxruntime * 1000 + epsilon:
@@ -91,15 +96,15 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 		if dist != "":
 			dist += ","
 		if service.redundant > 0 and service.redundant < 1:
-			dist += "1+x"
+			dist += "%i+x" % service.fragment
 		else:
-			dist += "1+%i" % service.redundant
+			dist += "%i+%i" % (service.fragment, service.redundant)
 	print "Distribution [algorithm: %s%12s%3s%s time:%8.2f]: {%s%s%s} %s%s%s" % (color, mode, submodestr, color_reset, t_diff, color, dist, color_reset, color, result, color_reset)
 
 if len(sys.argv) != 7:
 	print >>sys.stderr, "Multi cloud storage fragment distribution determination tool"
 	print >>sys.stderr, "Syntax: %s <inifile>|generated <min-availability/0> <min-capacity/0> <max-price/-1> <max-runtime/-1> <algorithm>" % sys.argv[0]
-	print >>sys.stderr, "Algorithms: fixed|proportional|combinatory|staggered|picav|picav+|all"
+	print >>sys.stderr, "Algorithms: fixed|proportional|absolute|combinatory|staggered|picav|picav+|all"
 	sys.exit(1)
 
 sg = ServiceGenerator()
@@ -133,6 +138,10 @@ if mode in ("proportional", "all"):
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "availability", debug)
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "capacity", debug)
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "price", debug)
+if mode in ("absolute", "all"):
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "absolute", "availability", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "absolute", "capacity", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "absolute", "price", debug)
 if mode in ("combinatory", "all"):
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "combinatory", None, debug)
 if mode in ("staggered", "all"):

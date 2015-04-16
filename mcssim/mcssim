@@ -170,6 +170,8 @@ class PICavVis(QtGui.QWidget):
 			mode = "fixed"
 		elif self.algorithm == "Proportional":
 			mode = "proportional"
+		elif self.algorithm == "Absolute":
+			mode = "absolute"
 		elif self.algorithm == "Combinatorial":
 			mode = "combinatory"
 		elif self.algorithm == "PICav":
@@ -179,7 +181,10 @@ class PICavVis(QtGui.QWidget):
 		elif self.algorithm == "Staggered":
 			mode = "staggered"
 
-		if mode in ("fixed", "proportional"):
+		for service in self.services:
+			service.reset()
+
+		if mode in ("fixed", "proportional", "absolute"):
 			distributionmethod = FixedProportional(debug=debug, debugout=False)
 			oav = distributionmethod.fixedproportional(self.services, self.targetav, mode)
 		elif mode == "picav":
@@ -215,7 +220,7 @@ class PICavVis(QtGui.QWidget):
 				for i in range(len(self.services)):
 					item = modelitem.child(i, 0)
 					if item.text() == service.name:
-						modelitem.child(i, 4).setText("1+%i" % service.redundant)
+						modelitem.child(i, 4).setText("%i+%i" % (service.fragment, service.redundant))
 
 			price = sum([x.price for x in self.services])
 			m = sum(s.redundant for s in self.services)

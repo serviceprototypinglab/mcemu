@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Calculates availabilities for fixed + for proportional assignments
+# Calculates availabilities for fixed + proportional + absolute assignments
+# (without any redundancy support)
 
 from distavail import Service, ServiceSet
 
@@ -22,24 +23,36 @@ class FixedProportional:
 	def fixedproportional(self, services, target, mode, submode=None):
 		#multiplier = len(services) * 10
 		multiplier = len(services)
+		absservice = None
 
 		if mode == "fixed":
 			shares = [int(multiplier * 1.0 / len(services)) for s in services]
-		elif not submode or submode == "availability":
-			services.sort(key=lambda s: s.availability)
-			sumavailability = sum([s.availability for s in services])
-			shares = [int(multiplier * float(s.availability) / sumavailability) for s in services]
-		elif submode == "capacity":
-			services.sort(key=lambda s: s.capacity)
-			sumcapacity = sum([s.capacity for s in services])
-			if sumcapacity == 0:
-				sumcapacity = 1
-			shares = [int(multiplier * float(s.capacity) / sumcapacity) for s in services]
-		elif submode == "price":
-			services.sort(key=lambda s: s.price, reverse=True)
-			maxprice = services[0].price
-			sumprice = sum([maxprice - s.price for s in services])
-			shares = [int(multiplier * float(maxprice - s.price) / sumprice) for s in services]
+		elif mode == "proportional":
+			if not submode or submode == "availability":
+				services.sort(key=lambda s: s.availability)
+				sumavailability = sum([s.availability for s in services])
+				shares = [int(multiplier * float(s.availability) / sumavailability) for s in services]
+			elif submode == "capacity":
+				services.sort(key=lambda s: s.capacity)
+				sumcapacity = sum([s.capacity for s in services])
+				if sumcapacity == 0:
+					sumcapacity = 1
+				shares = [int(multiplier * float(s.capacity) / sumcapacity) for s in services]
+			elif submode == "price":
+				services.sort(key=lambda s: s.price, reverse=True)
+				maxprice = services[0].price
+				sumprice = sum([maxprice - s.price for s in services])
+				shares = [int(multiplier * float(maxprice - s.price) / sumprice) for s in services]
+		elif mode == "absolute":
+			if not submode or submode == "availability":
+				services.sort(key=lambda s: s.availability, reverse=True)
+				absservice = services[0]
+			elif submode == "capacity":
+				services.sort(key=lambda s: s.capacity, reverse=True)
+			elif submode == "price":
+				services.sort(key=lambda s: s.price)
+			absservice = services[0]
+			shares = [len(services)] + [0] * (len(services) - 1)
 
 		# FIXME: Should better account for proportionality of decimal places
 		while sum(shares) < multiplier:
@@ -52,14 +65,20 @@ class FixedProportional:
 		self.log("Shares [%s/%s] = %s" % (mode, submode, str(shares)))
 
 		if mode == "fixed":
-			for i in range(len(services)):
-				services[i].redundant = 0
+			for service in services:
+				service.redundant = 0
 		elif mode == "proportional":
 			for i in range(len(services)):
 				# Over- or underproportional distribution -- leads to less capacity overhead
 				#services[i].redundant = i
 				# Staggered proportional distribution with equal+dontcare parts
-				services[i].redundant = shares[i]
+				services[i].fragment = shares[i]
+				#services[i].redundant = shares[i]
+		elif mode == "absolute":
+			for service in services:
+				service.fragment = 0
+			absservice.fragment = len(services)
+			#return absservice.availability
 		else:
 			return None
 

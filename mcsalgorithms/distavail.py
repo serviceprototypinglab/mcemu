@@ -11,13 +11,18 @@ import random
 class Service:
 	def __init__(self, name, availability=1.0, redundant=0, price=0, capacity=0):
 		self.name = name
-		self.availability = availability
+		self.fragment = 1
 		self.redundant = redundant
+		self.availability = availability
 		self.price = price
 		self.capacity = capacity
 
+	def reset(self):
+		self.fragment = 1
+		self.redundant = 0
+
 	def __repr__(self):
-		return "S[%s:av=%3.4f,r=%i,p=%3.2f,c=%i]" % (self.name, self.availability, self.redundant, self.price, self.capacity)
+		return "S[%s:f=%i/r=%i,av=%3.4f,p=%3.2f,c=%i]" % (self.name, self.fragment, self.redundant, self.availability, self.price, self.capacity)
 
 class ServiceSet:
 	def __init__(self, services, debug=True, debugout=True):
@@ -55,7 +60,7 @@ class ServiceSet:
 					loadablefragments = 0
 					for i in range(numservices):
 						state = (sample & (1 << i)) >> i
-						loadablefragments += (self.services[i].redundant + 1) * state
+						loadablefragments += (self.services[i].redundant + self.services[i].fragment) * state
 						#print "//prob", prob, "@state", state
 					if loadablefragments >= k:
 						prob += 1
@@ -91,15 +96,18 @@ class ServiceSet:
 			ts = services - ss
 			av = 1
 			red = 0
+			#fragments = len(ss)
+			fragments = 0
 			for s in ss:
 				av *= s.availability
 				red += s.redundant
+				fragments += s.fragment
 			for s in ts:
 				av *= (1 - s.availability)
-			if len(ss) >= k:
+			if fragments >= k:
 				accept = "x"
 				oav += av
-			elif len(ss) + red >= k:
+			elif fragments + red >= k:
 				accept = "R"
 				oav += av
 			else:
