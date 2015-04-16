@@ -36,7 +36,16 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 		oav = picav.picav(services, targetavailability)
 	elif mode == "picav+":
 		picavplus = PICavPlus(debug=debug, debugout=True)
-		oav = picavplus.picavplus(services, submode)
+		distributions = picavplus.picavplus(services, submode, targetavailability, targetcapacity, targetprice, shortlist=True, maxruntime=maxruntime)
+
+		oav = None
+		if len(distributions) >= 1:
+			oav = distributions[distributions.keys()[0]][1]
+			bestprice = sum([s.price for s in distributions[distributions.keys()[0]][0][0][0]])
+			dist = distributions[distributions.keys()[0]][0][0][0]
+			for service in services:
+				if not service in dist:
+					service.fragment = 0
 	elif mode == "combinatory":
 		combinatory = Combinatory(debug=debug, debugout=True)
 		bestprice, firsttime, firstprice, bests, bestk, bestoav = combinatory.combinatory(services, targetavailability, targetcapacity, targetprice, maxruntime=maxruntime)

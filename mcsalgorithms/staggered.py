@@ -128,6 +128,11 @@ class Staggered:
 			else:
 				color_av = color_red
 			logstr += " %savailability %3.4f%s" % (color_av, allav, color_reset)
+			if allprice <= maxprice or maxprice == -1:
+				color_av = color_green
+			else:
+				color_av = color_red
+			logstr += " %sprice %3.2f%s" % (color_av, allprice, color_reset)
 			if allcap >= mincap:
 				color_cap = color_green
 			else:
