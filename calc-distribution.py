@@ -63,6 +63,8 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 
 	t_diff = (t_stop - t_start) * 1000.0
 
+	services.sort(key=lambda s: s.name)
+
 	color = color_reset
 	if oav and oav >= targetavailability:
 		if bestprice:
@@ -131,6 +133,9 @@ mode = sys.argv[6]
 debug = True
 if mode == "all":
 	debug = False
+
+services.sort(key=lambda s: s.name)
+print "Services: %s" % ",".join([s.name for s in services])
 
 if mode in ("fixed", "all"):
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "fixed", None, debug)
