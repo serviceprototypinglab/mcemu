@@ -7,7 +7,7 @@ set ytics font ",8" offset -0.8,0.0
 set ztics font ",8" offset 1.0,0.0
 set xrange [0.0:0.40]
 set yrange [0:16]
-set zrange [-0.2:1.0]
+set zrange [-0.1:0.3]
 set xlabel "epsilon"
 set ylabel "omega"
 set zlabel "inaccuracy"
