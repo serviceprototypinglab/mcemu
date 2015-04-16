@@ -12,6 +12,7 @@ from mcsalgorithms.servicegen import ServiceGenerator
 
 sg = ServiceGenerator()
 services = sg.loadservices("../simulations/goldstandardservices.ini")
+#services = sg.loadservices("../simulations/tenservices.ini")
 
 ss = ServiceSet(services, debug=False)
 #preciseavs = {}
