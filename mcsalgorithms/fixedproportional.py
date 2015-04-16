@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Calculates availabilities for fixed + proportional + absolute assignments
-# (without any redundancy support)
+# (redundancy support only in fixed:replication, secret sharing only in fixed:splitting)
 
 from distavail import Service, ServiceSet
 
@@ -68,9 +68,17 @@ class FixedProportional:
 
 		self.log("Shares [%s/%s] = %s" % (mode, submode, str(shares)))
 
+		k = len(services)
+
 		if mode == "fixed":
-			for service in services:
-				service.redundant = 0
+			if submode == "replication":
+				k = 1
+				for service in services[1:]:
+					service.fragment = 0
+					service.redundant = 1
+			else:
+				for service in services:
+					service.redundant = 0
 		elif mode == "proportional":
 			for i in range(len(services)):
 				# Over- or underproportional distribution -- leads to less capacity overhead
@@ -85,8 +93,6 @@ class FixedProportional:
 			#return absservice.availability
 		else:
 			return None
-
-		k = len(services)
 
 		ss = ServiceSet(services, debug=False)
 		oav = ss.availability(k)

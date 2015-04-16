@@ -138,7 +138,8 @@ services.sort(key=lambda s: s.name)
 print "Services: %s" % ",".join([s.name for s in services])
 
 if mode in ("fixed", "all"):
-	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "fixed", None, debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "fixed", "splitting", debug)
+	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "fixed", "replication", debug)
 if mode in ("proportional", "all"):
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "availability", debug)
 	calculatedistribution(services, targetavailability, targetcapacity, targetprice, maxruntime, "proportional", "capacity", debug)
