@@ -31,7 +31,7 @@ class ServiceSet:
 		elif mode == "approximated":
 			return self.availabilitymontecarlo(k)
 
-	def availabilitymontecarlo(self, k=1):
+	def availabilitymontecarlo(self, k=1, epsilon=0.03, trials=20, om=None):
 		numservices = len(self.services)
 
 		# 50% redundancy assumed; n=k*1.5
@@ -41,9 +41,8 @@ class ServiceSet:
 		for i in range(numservices - k):
 			service.redundant += 1
 
-		om = len(self.services)
-		epsilon = 0.03
-		trials = 20
+		if not om:
+			om = len(self.services)
 		probs = []
 
 		while True:
