@@ -3,6 +3,7 @@
 # Calculates the overall availability of data which is split into k shares
 # k=1: *replicated* data, i.e. >= 1 service needs to be available,
 # or k>1: *dispersed* data with/without redundancy, i.e. k/k-m (m<k?) needs to be available
+# Service.redundant: extra local redundancy, which increases availability but increasingly breaks secret sharing
 
 import itertools
 import random
@@ -34,13 +35,6 @@ class ServiceSet:
 	def availabilitymontecarlo(self, k=1, epsilon=0.03, trials=20, om=None):
 		numservices = len(self.services)
 
-		# 50% redundancy assumed; n=k*1.5
-		for i, service in enumerate(self.services):
-			#service.redundant = i % 2
-			service.redundant = 0
-		for i in range(numservices - k):
-			service.redundant += 1
-
 		if not om:
 			om = len(self.services)
 		probs = []
@@ -49,7 +43,6 @@ class ServiceSet:
 			for trial in range(trials):
 				samples = []
 				for i in range(om):
-					#sample = random.randint(0, 2 ** numservices - 1)
 					sample = 0
 					for j in range(numservices):
 						if random.random() < self.services[j].availability:
@@ -62,12 +55,10 @@ class ServiceSet:
 					loadablefragments = 0
 					for i in range(numservices):
 						state = (sample & (1 << i)) >> i
-						#prob += (self.services[i].redundant + 1) * self.services[i].availability * state
 						loadablefragments += (self.services[i].redundant + 1) * state
 						#print "//prob", prob, "@state", state
-					if loadablefragments >= numservices:
+					if loadablefragments >= k:
 						prob += 1
-				#prob /= numservices
 				prob = float(prob) / om
 				probs.append(prob)
 
@@ -82,11 +73,9 @@ class ServiceSet:
 			if varianceprob < epsilon:
 				self.log("found good approximation")
 				return meanprob
-				#break
-			if om == 2 ** numservices:
+			if om >= 2 ** numservices:
 				self.log("no approximation found, bailing out")
 				return 0
-				#break
 			om += 1
 
 	def availabilitypicav(self, k=1):
