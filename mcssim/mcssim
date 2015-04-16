@@ -21,8 +21,8 @@ class PICavVis(QtGui.QWidget):
 		self.services = []
 		self.targetav = 0
 		self.targetc = 0
-		self.targetp = 0
-		self.targetruntime = 0
+		self.targetp = -1
+		self.targetruntime = -1
 		self.tracing = None
 		self.algorithm = None
 
@@ -68,6 +68,7 @@ class PICavVis(QtGui.QWidget):
 		combo_algo = QtGui.QComboBox()
 		combo_algo.addItem("Fixed")
 		combo_algo.addItem("Proportional")
+		combo_algo.addItem("Absolute")
 		combo_algo.addItem("Combinatorial")
 		combo_algo.addItem("Staggered")
 		combo_algo.addItem("PICav")
@@ -147,10 +148,14 @@ class PICavVis(QtGui.QWidget):
 	@pyqtSlot(int)
 	def slot_changed_p(self, v):
 		self.targetp = v / 100.0
+		if v == 0:
+			self.targetp = -1
 
 	@pyqtSlot(int)
 	def slot_changed_runtime(self, v):
-		self.targetruntime = v * 1000.0
+		self.targetruntime = v
+		if v == 0:
+			self.targetruntime = -1
 
 	@pyqtSlot()
 	def slot_calculate(self):
@@ -199,7 +204,7 @@ class PICavVis(QtGui.QWidget):
 			oav = bestoav
 		elif mode == "staggered":
 			distributionmethod = Staggered(debug=debug, internaldebug=internaldebug, debugout=False)
-			distributions = distributionmethod.staggeredcombinatoric(self.services, self.targetav, self.targetc, self.targetp, shortlist=True)
+			distributions = distributionmethod.staggeredcombinatoric(self.services, self.targetav, self.targetc, self.targetp, shortlist=True, maxruntime=self.targetruntime)
 			oav = None
 			if len(distributions) >= 1:
 				oav = distributions[distributions.keys()[0]][1]
