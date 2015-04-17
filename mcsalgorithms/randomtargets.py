@@ -6,10 +6,11 @@ from distavail import Service, ServiceSet
 import random
 
 class Random:
-	def __init__(self, debug=False, debugout=False):
+	def __init__(self, debug=False, debugout=False, calcmode=None):
 		self.debug = debug
 		self.debugout = debugout
 		self.logtext = ""
+		self.calcmode = calcmode
 
 	def log(self, s):
 		if self.debug:
@@ -34,6 +35,6 @@ class Random:
 		self.log("Random shares = %s" % str(shares))
 
 		ss = ServiceSet(services, debug=False)
-		oav = ss.availability(k=random.randint(1, len(services)))
+		oav = ss.availability(k=random.randint(1, len(services)), mode=self.calcmode)
 
 		return oav

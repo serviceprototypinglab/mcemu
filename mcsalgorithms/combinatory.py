@@ -9,11 +9,12 @@ import random
 from distavail import Service, ServiceSet
 
 class Combinatory:
-	def __init__(self, debug=False, internaldebug=False, debugout=False):
+	def __init__(self, debug=False, internaldebug=False, debugout=False, calcmode=None):
 		self.debug = debug
 		self.internaldebug = internaldebug
 		self.debugout = debugout
 		self.logtext = ""
+		self.calcmode = calcmode
 
 	def log(self, s):
 		if self.debug:
@@ -43,7 +44,7 @@ class Combinatory:
 		for s in powersetlist:
 			for k in range(1, len(s) + 1):
 				ss = ServiceSet(s, debug=self.internaldebug)
-				oav = ss.availability(k)
+				oav = ss.availability(k, self.calcmode)
 				if oav >= targetavailability:
 					##hit = len(s)
 					price = sum([x.price for x in s])

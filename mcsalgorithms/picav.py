@@ -8,11 +8,12 @@ import sys
 from distavail import Service, ServiceSet
 
 class PICav:
-	def __init__(self, debug=False, internaldebug=False, debugout=False):
+	def __init__(self, debug=False, internaldebug=False, debugout=False, calcmode=None):
 		self.debug = debug
 		self.internaldebug = internaldebug
 		self.debugout = debugout
 		self.logtext = ""
+		self.calcmode = calcmode
 
 	def log(self, s):
 		if self.debug:
@@ -64,7 +65,7 @@ class PICav:
 			k = len(services) * factor
 			m = sum(s.redundant for s in services)
 			ss = ServiceSet(services, debug=self.internaldebug, debugout=self.debugout)
-			oav = ss.availability(k=k)
+			oav = ss.availability(k=k, mode=self.calcmode)
 			if self.internaldebug:
 				self.logtext += ss.getlog()
 			self.log(" (calculation) k=%i m=%i => availability=%3.2f" % (k, m, oav))

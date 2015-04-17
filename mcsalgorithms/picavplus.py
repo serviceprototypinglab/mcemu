@@ -11,11 +11,12 @@ import itertools
 import time
 
 class PICavPlus:
-	def __init__(self, debug=False, internaldebug=False, debugout=False):
+	def __init__(self, debug=False, internaldebug=False, debugout=False, calcmode=None):
 		self.debug = debug
 		self.internaldebug = internaldebug
 		self.debugout = debugout
 		self.logtext = ""
+		self.calcmode = calcmode
 
 	def log(self, s):
 		if self.debug:
@@ -79,7 +80,7 @@ class PICavPlus:
 			sliceconfig = []
 			price = sum([s.price for s in services]) * dispslice * len(services)
 			for k in range(1, len(services) + 1):
-				av = ss.availability(k)
+				av = ss.availability(k, mode=self.calcmode)
 				cap = k * dispslice
 				if cap == 0:
 					cap = 10000

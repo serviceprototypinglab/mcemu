@@ -6,10 +6,11 @@
 from distavail import Service, ServiceSet
 
 class FixedProportional:
-	def __init__(self, debug=False, debugout=False):
+	def __init__(self, debug=False, debugout=False, calcmode=None):
 		self.debug = debug
 		self.debugout = debugout
 		self.logtext = ""
+		self.calcmode = calcmode
 
 	def log(self, s):
 		if self.debug:
@@ -95,6 +96,6 @@ class FixedProportional:
 			return None
 
 		ss = ServiceSet(services, debug=False)
-		oav = ss.availability(k)
+		oav = ss.availability(k, mode=self.calcmode)
 
 		return oav

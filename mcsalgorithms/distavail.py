@@ -32,7 +32,7 @@ class ServiceSet:
 		self.logtext = ""
 
 	def availability(self, k=1, mode="precise"):
-		if mode == "precise":
+		if not mode or mode == "precise":
 			return self.availabilitypicav(k)
 		elif mode == "approximated":
 			return self.availabilitymontecarlo(k)
