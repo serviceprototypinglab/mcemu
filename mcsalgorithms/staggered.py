@@ -51,6 +51,7 @@ class Staggered:
 				for candidate in combinatoricdistributionscandidates:
 					if not "capacity" in combinatoricdistributions or candidate[2] > combinatoricdistributions["capacity"][2]:
 						combinatoricdistributions["capacity"] = candidate
+					# FIXME: should be candidate[1]??? (also in picav+)
 					if not "availability" in combinatoricdistributions or candidate[2] > combinatoricdistributions["availability"][1]:
 						combinatoricdistributions["availability"] = candidate
 			self.log("shortlisted staggered result: %s" % str(combinatoricdistributions))

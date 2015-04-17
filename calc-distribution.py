@@ -40,7 +40,8 @@ def calculatedistribution(services, targetavailability, targetcapacity, targetpr
 		oav = picav.picav(services, targetavailability)
 	elif mode == "picav+":
 		picavplus = PICavPlus(debug=debug, debugout=True, calcmode=calcmode)
-		distributions = picavplus.picavplus(services, submode, targetavailability, targetcapacity, targetprice, shortlist=True, maxruntime=maxruntime)
+		#distributions = picavplus.picavplus(services, submode, targetavailability, targetcapacity, targetprice, shortlist=True, maxruntime=maxruntime)
+		distributions = picavplus.picavplusstaggered(services, targetavailability, targetcapacity, targetprice, shortlist=True, maxruntime=maxruntime)
 
 		oav = None
 		if len(distributions) >= 1:

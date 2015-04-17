@@ -53,6 +53,7 @@ class PICavPlus:
 				for candidate in combinatoricdistributionscandidates:
 					if not "capacity" in combinatoricdistributions or candidate[2] > combinatoricdistributions["capacity"][2]:
 						combinatoricdistributions["capacity"] = candidate
+					# FIXME: should be candidate[1]??? (also in staggered)
 					if not "availability" in combinatoricdistributions or candidate[2] > combinatoricdistributions["availability"][1]:
 						combinatoricdistributions["availability"] = candidate
 			self.log("shortlisted staggered result: %s" % str(combinatoricdistributions))
@@ -69,102 +70,52 @@ class PICavPlus:
 		color_yellow = "\033[93m"
 		color_reset = "\033[0m"
 
+		services = list(services)
 		distributions = {}
 		sliceconfigurations = []
+		allservices = []
+		allav = 0.0
+		allprice = 0.0
+		allcap = 0
 
 		dispslicetotal = 0
 		while len(services) > 0:
 			dispslice = min([s.capacity for s in services]) - dispslicetotal
 			self.log("- dispslice %i over %i nodes" % (dispslice, len(services)))
-			ss = ServiceSet(services, debug=self.internaldebug)
-			sliceconfig = []
 			price = sum([s.price for s in services]) * dispslice * len(services)
-			for k in range(1, len(services) + 1):
-				av = ss.availability(k, mode=self.calcmode)
+			if maxprice != -1 and price > maxprice:
+				return distributions
+
+			slicedistribution = self.picavslice(services, minav, mincap, maxprice)
+			if slicedistribution:
+				k, av = slicedistribution
 				cap = k * dispslice
 				if cap == 0:
 					cap = 10000
 				self.log("  - k %i -> slice availability %3.4f effective slice capacity %i price %3.2f" % (k, av, cap, price))
-				sliceconfig.append((av, cap, price, services, k))
-			sliceconfigurations.append(sliceconfig)
+				sliceconfigurations.append((av, cap, price, services, k))
+
 			dispslicetotal += dispslice
 			services = [s for s in services if s.capacity != dispslicetotal]
 			if dispslice >= mincap:
 				services = []
 
-		configurations = list(itertools.product(*sliceconfigurations))
-		for config in configurations:
-			allcap = 0
-			allav = 0.0
-			allprice = 0.0
-			allservices = []
-			allservicesreadable = []
-			for dispslice in config:
-				av, cap, price, services, k = dispslice
-				allav += av * cap
-				allprice += price
-				allcap += cap
-				allservices.append((services, k, cap))
-				allservicesreadable.append(([s.name for s in services], k))
-			allav /= allcap
-			allprice /= allcap
-			if allav >= minav and allcap >= mincap and (maxprice == -1 or allprice <= maxprice):
-				rating = "%s%3s%s" % (color_green, "ok", color_reset)
-				if shortlist:
-					if len(distributions) == 0:
-						distributions["default"] = (allservices, allav, allcap)
-					if allav > distributions["default"][1]:
-						distributions["availability"] = (allservices, allav, allcap)
-					if allcap > distributions["default"][2]:
-						distributions["capacity"] = (allservices, allav, allcap)
-				else:
-					distributions["D%i%3.4f" % (allcap, allav)] = (allservices, allav, allcap)
-			else:
-				rating = "%s%3s%s" % (color_red, "bad", color_reset)
-			logstr = "=> {%s}" % rating
-			if allav >= minav:
-				color_av = color_green
-			else:
-				color_av = color_red
-			logstr += " %savailability %3.4f%s" % (color_av, allav, color_reset)
-			if allprice <= maxprice or maxprice == -1:
-				color_av = color_green
-			else:
-				color_av = color_red
-			logstr += " %sprice %3.2f%s" % (color_av, allprice, color_reset)
-			if allcap >= mincap:
-				color_cap = color_green
-			else:
-				color_cap = color_red
-			logstr += " %seffective capacity %i%s" % (color_cap, allcap, color_reset)
-			logstr += " // %s" % str(allservicesreadable)
-			self.log(logstr)
+		# in staggered, config == dispslice
+		for config in sliceconfigurations:
+			av, cap, price, services, k = config
+			allav += av * cap
+			allprice += price
+			allcap += cap
+			allservices.append((services, k, cap))
+		allav /= allcap
+		allprice /= allcap
 
-		if shortlist and len(distributions) > 1:
-			if not "capacity" in distributions:
-				distributions["capacity"] = distributions["default"]
-			if not "availability" in distributions:
-				distributions["availability"] = distributions["default"]
-			del distributions["default"]
-
-		for variant in distributions.keys():
-			self.log("%s%s -- av %3.4f / cap %i%s" % (color_yellow, variant, distributions[variant][1], distributions[variant][2], color_reset))
-
-			allservices = distributions[variant][0]
-			redundancies = {}
-			for services, k, cap in allservices:
-				for service in services:
-					redundancies[service] = redundancies.get(service, 0) + (len(services) - k) * cap
-			for service in redundancies.keys():
-				redundancy = float(redundancies[service])
-				redundancy /= allcap
-				service.redundant = redundancy
-				self.log("Redundancy: %s = %3.2f" % (service, redundancy))
+		distributions["picav"] = (allservices, allav, allcap)
 
 		return distributions
 
-	def picavpluslegacy(self):
-		self.log("Services:")
+	def picavslice(self, services, minav=0.0, mincap=0, maxprice=-1, submode="availability"):
+		self.log("Slice services:")
 		self.log(str(services))
 
 		if not submode or submode == "availability":
@@ -174,12 +125,49 @@ class PICavPlus:
 		elif submode == "price":
 			services.sort(key=lambda s: s.price, reverse=True)
 
-		self.log("Ordered services:")
+		self.log("Ordered slice services:")
 		self.log(str(services))
 
 		gi = (services[0].availability, services[-1].availability)
 
 		self.log("Global availability interval:")
 		self.log(gi)
+
+		self.log("Iterative clustering:")
+
+		##!!
+		maxiterations = 100
+		factor = 1
+
+		for i in range(1, maxiterations + 1):
+			self.log("(iteration:%i)" % i)
+			intervals = []
+			classes = []
+			elements = 0
+
+			for j in range(0, i):
+				interval = (gi[0] + j * (gi[1] - gi[0]) / i, gi[0] + (j + 1) * (gi[1] - gi[0]) / i)
+				intervals.append(interval)
+				eps = 0.0001
+				classes.append(filter(lambda s: s.availability > interval[0] - eps and s.availability < interval[1] + eps, services))
+				if len(classes[-1]) > 0:
+					elements += 1
+					assignedelements = elements
+					for s in classes[-1]:
+						s.redundant = elements - 1
+				else:
+					assignedelements = 0
+				self.log(" (interval:%i) %s {%i services} à %i elements" % (j, str(interval), len(classes[-1]), assignedelements))
+
+			k = len(services) * factor
+			m = sum(s.redundant for s in services)
+			ss = ServiceSet(services, debug=self.internaldebug, debugout=self.debugout)
+			oav = ss.availability(k=k, mode=self.calcmode)
+			if self.internaldebug:
+				self.logtext += ss.getlog()
+			self.log(" (calculation) k=%i m=%i => availability=%3.2f" % (k, m, oav))
+
+			if oav > minav:
+				return k, oav
 
 		return None
