@@ -107,10 +107,16 @@ class PICavPlus:
 			allprice += price
 			allcap += cap
 			allservices.append((services, k, cap))
-		allav /= allcap
-		allprice /= allcap
 
-		distributions["picav"] = (allservices, allav, allcap)
+		if len(sliceconfigurations) > 0:
+			allav /= allcap
+			allprice /= allcap
+
+			if allav >= minav and allcap >= mincap and (maxprice == -1 or allprice <= maxprice):
+				distributions["picav"] = (allservices, allav, allcap)
+			else:
+				self.log("dismiss %s; requirements not met" % str(allservices))
+				self.log("av: %i > %i cap: %i > %i price: %i < %i" % (allav, minav, allcap, mincap, allprice, maxprice))
 
 		return distributions
 
@@ -136,7 +142,7 @@ class PICavPlus:
 		self.log("Iterative clustering:")
 
 		##!!
-		maxiterations = 100
+		maxiterations = 10
 		factor = 1
 
 		for i in range(1, maxiterations + 1):
