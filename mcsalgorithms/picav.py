@@ -70,6 +70,7 @@ class PICav:
 				self.logtext += ss.getlog()
 			self.log(" (calculation) k=%i m=%i => availability=%3.2f" % (k, m, oav))
 
+			# FIXME: >=?
 			if oav > minavail:
 				return oav
 

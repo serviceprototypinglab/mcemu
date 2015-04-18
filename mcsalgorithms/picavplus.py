@@ -65,6 +65,7 @@ class PICavPlus:
 		return combinatoricdistributions
 
 	def picavplusstaggered(self, services, minav=0.0, mincap=0, maxprice=-1, shortlist=True, maxruntime=-1):
+		# FIXME: shortlist/maxruntime are unused
 		color_red = "\033[91m"
 		color_green = "\033[92m"
 		color_yellow = "\033[93m"
@@ -124,6 +125,7 @@ class PICavPlus:
 		self.log("Slice services:")
 		self.log(str(services))
 
+		# FIXME: submode needs to be given from outside
 		if not submode or submode == "availability":
 			services.sort(key=lambda s: s.availability)
 		elif submode == "capacity":
@@ -173,6 +175,7 @@ class PICavPlus:
 				self.logtext += ss.getlog()
 			self.log(" (calculation) k=%i m=%i => availability=%3.2f" % (k, m, oav))
 
+			# FIXME: >=?
 			if oav > minav:
 				return k, oav
 
