@@ -1,5 +1,5 @@
 set title "Monte Carlo Approximation for Selected Distributions (Fixed Trials, n=4)"
-set grid lt rgb "#191970" ztics
+set grid lt rgb "#191970" ztics ytics xtics
 set hidden3d
 set surface
 set xtics font ",8" offset -0.8,0.3
@@ -16,7 +16,7 @@ set view 50,140,0.92
 set palette defined ( 0 '#006400',\
                       1 '#D7DF01',\
                       2 '#DF0101')
-set cbrange [0:20]
+set cbrange [-0.1:0.33]
 
 set term pdf monochrome dashed
 #set term pdf

@@ -1,5 +1,5 @@
 set title "Staggered Distribution Results"
-set grid lt rgb "#191970" ztics
+set grid lt rgb "#191970" ztics ytics xtics
 set hidden3d
 set surface
 set xtics font ",8" offset -0.8,0.3

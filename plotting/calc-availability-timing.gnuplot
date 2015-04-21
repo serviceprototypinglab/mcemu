@@ -1,11 +1,11 @@
 set title "Availability Calculation Performance"
-set grid lt rgb "#191970"
+set grid lt rgb "#191970" ztics ytics xtics
 set hidden3d
 set surface
 set parametric
-set xtics 1
-set ytics 10
-set ztics 2000.0
+set xtics font ",8" offset -0.9,0.1
+set ytics font ",8" offset -0.6,-0.1
+set ztics font ",8" offset 1.0,0.0
 set xrange [1:10]
 set yrange [0:100]
 #set zrange [0.0:10000.0]
@@ -31,4 +31,4 @@ set term pdf monochrome dashed
 
 set output "calc-availability-timing.pdf"
 set datafile separator ","
-splot 'calc-availability.csv.availabilities' using 1:2:5 title 'Availability' with lines palette
+splot 'calc-availability.csv.availabilities' using 1:2:5 title 'Availability Calculation' with lines palette
