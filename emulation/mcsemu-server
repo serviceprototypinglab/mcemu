@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Emulates storage service availabilities with launch/shutdown control over FTP servers (gatling)
-# Syntax: mcsemu.py <inifile>
+# Emulates storage service availabilities with launch/shutdown control over local FTP/HTTP servers (gatling)
+# Syntax: mcsemu-server <inifile>
 
 import sys
 import time
 import random
 import subprocess
+import os
 
 sys.path.append("..")
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
 
 if len(sys.argv) != 2:
-	print "Syntax: mcsemu.py <inifile>"
+	print "Syntax: mcsemu-server <inifile>"
 	sys.exit(1)
 
 class EmulatedService:
@@ -26,6 +27,11 @@ class EmulatedService:
 		self.avoffline = 0
 		self.process = None
 		self.online = None
+		self.workdir = os.path.join(os.getcwd(), "_rootdirs", service.name)
+		try:
+			os.makedirs(self.workdir)
+		except OSError:
+			pass
 		self.startservice()
 
 	def realav(self):
@@ -37,8 +43,11 @@ class EmulatedService:
 		return "ES[%s:ftp:%i,http:%i,av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.ftpport, self.httpport, self.service.availability, self.realav(), onlinestate)
 
 	def startservice(self):
+		origdir = os.getcwd()
 		cmd = "gatling -n -S -p %i -fp %i" % (self.httpport, self.ftpport)
+		os.chdir(self.workdir)
 		self.process = subprocess.Popen(cmd.split(" "))
+		os.chdir(origdir)
 		print ">> %s -> %i" % (cmd, self.process.pid)
 		self.online = True
 

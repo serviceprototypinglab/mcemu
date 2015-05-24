@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Emulates storage service usage by retrieving fragments from emulated FTP/HTTP servers
+# Syntax: mcsemu-client <inifile>
+
+import sys
+import time
+import random
+import os
+import urllib
+
+sys.path.append("..")
+from mcsalgorithms.distavail import Service, ServiceSet
+from mcsalgorithms.servicegen import ServiceGenerator
+
+if len(sys.argv) != 2:
+	print "Syntax: mcsemu-client <inifile>"
+	sys.exit(1)
+
+class EmulatedServiceClient:
+	def __init__(self, service, ftpport, httpport):
+		self.service = service
+		self.ftpport = ftpport
+		self.httpport = httpport
+		self.workdir = os.path.join(os.getcwd(), "_rootdirs", service.name)
+
+	def __repr__(self):
+		return "EC[%s:workdir:%s]" % (self.service.name, self.workdir)
+
+	def upload(self, algorithmdir, fragmentfile):
+		algorithmworkdir = os.path.join(self.workdir, algorithmdir)
+		try:
+			os.makedirs(algorithmworkdir)
+		except OSError:
+			pass
+		print "** =>", algorithmworkdir, "frag_", fragmentfile
+		fn = os.path.join(algorithmworkdir, "frag_%s" % fragmentfile)
+		f = open(fn, "w")
+		f.write("somedata\n")
+		f.close()
+
+	def download(self, algorithmdir, fragmentfile):
+		httpurl = "http://localhost:%i/%s/frag_%s" % (self.httpport, algorithmdir, fragmentfile)
+		print "** <=", httpurl
+		urllib.urlopen(httpurl)
+
+sg = ServiceGenerator()
+services = sg.loadservices(sys.argv[1])
+
+ftpport = 2000
+httpport = 3000
+emulatedserviceclients = []
+for service in services:
+	emulatedserviceclients.append(EmulatedServiceClient(service, ftpport, httpport))
+	ftpport += 1
+	httpport += 1
+
+print "Emulated service clients:"
+print emulatedserviceclients
+
+print "Placement of fragments: equal distribution"
+for i, es in enumerate(emulatedserviceclients):
+	es.upload("equal", str(i))
+
+print "Emulation starts..."
+inittime = int(time.time())
+while True:
+	time.sleep(random.random() * 5)
+
+	successcount = 0
+	for i, es in enumerate(emulatedserviceclients):
+		try:
+			es.download("equal", str(i))
+			successcount += 1
+		except:
+			pass
+	success = True
+	if successcount < len(emulatedserviceclients):
+		success = False
+	print "* virtual time [%5i]: download equal: %i [%i/%i]" % (int(time.time()) - inittime, success, successcount, len(emulatedserviceclients))
