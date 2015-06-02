@@ -1,0 +1,39 @@
+$ ./calc-distribution.py simulations/scenario.ini 0.60 0 -1 -1 all
+Services: A,B,C
+Distribution [algorithm:        fixed[sp] time:    0.22]: {1+0,1+0,1+0} error, no solution found; discarding availability=0.0600
+Distribution [algorithm:        fixed[re] time:    0.17]: {1+0,0+1,0+1} availability=0.7900 price=0.00 capacity-overhead=0.67
+Distribution [algorithm: proportional[av] time:    0.17]: {0+0,1+0,2+0} error, no solution found; discarding availability=0.2000
+Distribution [algorithm: proportional[ca] time:    0.17]: {0+0,0+0,3+0} error, no solution found; discarding availability=0.5000
+Distribution [algorithm: proportional[pr] time:    0.17]: {0+0,0+0,3+0} error, no solution found; discarding availability=0.5000
+Distribution [algorithm:     absolute[av] time:    0.16]: {0+0,0+0,3+0} error, no solution found; discarding availability=0.5000
+Distribution [algorithm:     absolute[ca] time:    0.17]: {3+0,0+0,0+0} error, no solution found; discarding availability=0.3000
+Distribution [algorithm:     absolute[pr] time:    0.31]: {3+0,0+0,0+0} error, no solution found; discarding availability=0.3000
+Distribution [algorithm:       random     time:    0.26]: {1+1,0+0,1+0} error, no solution found; discarding availability=0.1500
+Distribution [algorithm:  combinatory     time:    0.98]: {1+0,0+1,0+1} availability=0.7900 price=0.00 capacity-overhead=0.67
+Distribution [algorithm:    staggered[pl] time:    0.52]: {1+2,1+2,1+2} availability=0.7900 price=0.00 capacity-overhead=2.00
+Distribution [algorithm:    staggered[co] time:    1.29]: {1+2,0+2,1+2} availability=0.6500 price=0.00 capacity-overhead=2.00
+Distribution [algorithm:        picav     time:    0.69]: {1+0,1+2,1+3} availability=0.7000 price=0.00 capacity-overhead=1.67
+Distribution [algorithm:       picav+[av] time:    5.74]: {1+0,1+2,1+3} availability=0.7000 price=0.00 capacity-overhead=1.67
+Distribution [algorithm:       picav+[ca] time:    5.71]: {1+0,1+2,1+3} availability=0.7000 price=0.00 capacity-overhead=1.67
+Distribution [algorithm:       picav+[pr] time:    5.74]: {1+0,1+2,1+3} availability=0.7000 price=0.00 capacity-overhead=1.67
+
+$ ./calc-distribution.py simulations/goldstandardservices.ini 0.90 0 -1 -1 all
+Services: D1,D2,D3,D4
+Distribution [algorithm:        fixed[sp] time:    0.40]: {1+0,1+0,1+0,1+0} error, no solution found; discarding availability=0.2794
+Distribution [algorithm:        fixed[re] time:    0.36]: {1+0,0+1,0+1,0+1} availability=1.0000 price=1.54 capacity-overhead=0.75
+Distribution [algorithm: proportional[av] time:    0.36]: {1+0,0+0,2+0,1+0} availability=0.9314 price=1.54 capacity-overhead=0.00
+Distribution [algorithm: proportional[ca] time:    0.36]: {0+0,0+0,1+0,3+0} availability=0.9702 price=0.54 capacity-overhead=0.00
+Distribution [algorithm: proportional[pr] time:    0.36]: {0+0,2+0,1+0,1+0} error, no solution found; discarding availability=0.2911
+Distribution [algorithm:     absolute[av] time:    0.36]: {0+0,0+0,4+0,0+0} availability=0.9900 price=0.30 capacity-overhead=0.00
+Distribution [algorithm:     absolute[ca] time:    0.36]: {0+0,0+0,0+0,4+0} availability=0.9800 price=0.24 capacity-overhead=0.00
+Distribution [algorithm:     absolute[pr] time:    0.35]: {0+0,4+0,0+0,0+0} error, no solution found; discarding availability=0.3000
+Distribution [algorithm:       random     time:    0.97]: {1+0,1+2,0+0,0+0} error, no solution found; discarding availability=0.2880
+Distribution [algorithm:  combinatory     time:   10.65]: {0+0,0+0,0+0,1+0} availability=0.9800 price=0.24 capacity-overhead=0.00
+Distribution [algorithm:    staggered[pl] time:    1.83]: {1+x,1+x,1+x,1+x} availability=0.9516 price=1.54 capacity-overhead=0.75
+Distribution [algorithm:    staggered[co] time:    5.52]: {0+x,0+x,1+x,1+x} availability=0.9702 price=0.54 capacity-overhead=0.75
+Distribution [algorithm:        picav     time:    0.77]: {1+1,1+0,1+1,1+1} availability=0.9986 price=1.54 capacity-overhead=0.75
+Distribution [algorithm:       picav+[av] time:    3.94]: {0+1,0+0,1+1,1+1} availability=0.9702 price=0.54 capacity-overhead=0.75
+Distribution [algorithm:       picav+[ca] time:    3.90]: {0+1,0+0,1+1,1+1} availability=0.9702 price=0.54 capacity-overhead=0.75
+Distribution [algorithm:       picav+[pr] time:    3.93]: {0+1,0+0,1+1,1+1} availability=0.9702 price=0.54 capacity-overhead=0.75
+
+

@@ -32,6 +32,9 @@ class DistributionWrapper:
 			ret = self.assign(services, targetavailability, "picav", None)
 		elif mode == "picav+":
 			ret = self.assign(services, targetavailability, "picav+", "availability")
+		else:
+			raise BaseException("Invalid mode '%s'." % mode)
+			#return False
 		return ret
 
 	def assign(self, services, targetavailability, mode, submode):
