@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 #
 # Emulates storage service usage by retrieving fragments from emulated FTP/HTTP servers
-# Syntax: mcsemu-client <inifile>
+# Attention: Only supports availability, none of the other goal properties
+# Attention: Only supports individual algorithms, not the 'all' mode
+# Syntax: mcsemu-client <inifile> <min-availability/0> <algorithm>
+# Algorithms: fixed|proportional|absolute|random|combinatory|staggered|picav|picav+
 
 import sys
 import time
@@ -13,10 +16,7 @@ import urllib
 sys.path.append("..")
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
-
-if len(sys.argv) != 2:
-	print "Syntax: mcsemu-client <inifile>"
-	sys.exit(1)
+from mcsalgorithms.wrapper import DistributionWrapper
 
 class EmulatedServiceClient:
 	def __init__(self, service, ftpport, httpport):
@@ -24,9 +24,10 @@ class EmulatedServiceClient:
 		self.ftpport = ftpport
 		self.httpport = httpport
 		self.workdir = os.path.join(os.getcwd(), "_rootdirs", service.name)
+		self.fragments = service.fragment + service.redundant
 
 	def __repr__(self):
-		return "EC[%s:workdir:%s]" % (self.service.name, self.workdir)
+		return "EC[%s:workdir:%s,fragments:%i]" % (self.service.name, self.workdir, self.fragments)
 
 	def upload(self, algorithmdir, fragmentfile):
 		algorithmworkdir = os.path.join(self.workdir, algorithmdir)
@@ -34,7 +35,8 @@ class EmulatedServiceClient:
 			os.makedirs(algorithmworkdir)
 		except OSError:
 			pass
-		print "** =>", algorithmworkdir, "frag_", fragmentfile
+		filepath = "%s/frag_%s" % (algorithmworkdir, fragmentfile)
+		print "** =>", filepath
 		fn = os.path.join(algorithmworkdir, "frag_%s" % fragmentfile)
 		f = open(fn, "w")
 		f.write("somedata\n")
@@ -45,8 +47,31 @@ class EmulatedServiceClient:
 		print "** <=", httpurl
 		urllib.urlopen(httpurl)
 
+if len(sys.argv) != 4:
+	print "Syntax: mcsemu-client <inifile> <min-availability/0> <algorithm>"
+	print "Algorithms: fixed|proportional|absolute|random|combinatory|staggered|picav|picav+"
+	sys.exit(1)
+
 sg = ServiceGenerator()
 services = sg.loadservices(sys.argv[1])
+
+targetavailability = float(sys.argv[2])
+if targetavailability > 1.0:
+	targetavailability /= 100.0
+
+mode = sys.argv[3]
+if mode == "all":
+	print "Mode must not be 'all'!"
+	sys.exit(1)
+
+wrapper = DistributionWrapper()
+success = wrapper.assigndistribution(services, targetavailability, mode)
+if not success:
+	print "No solution found; emulation would fail."
+	sys.exit(1)
+
+for service in services:
+	print "// %s: %i + %i fragments" % (service.name, service.fragment, service.redundant)
 
 ftpport = 2000
 httpport = 3000
@@ -59,9 +84,12 @@ for service in services:
 print "Emulated service clients:"
 print emulatedserviceclients
 
-print "Placement of fragments: equal distribution"
-for i, es in enumerate(emulatedserviceclients):
-	es.upload("equal", str(i))
+print "Placement of fragments according to chosen distribution"
+fragnum = 1
+for es in emulatedserviceclients:
+	for localfragnum in range(es.fragments):
+		es.upload("equal", fragnum + localfragnum)
+	fragnum += es.fragments
 
 print "Emulation starts..."
 inittime = int(time.time())
@@ -69,12 +97,15 @@ while True:
 	time.sleep(random.random() * 5)
 
 	successcount = 0
-	for i, es in enumerate(emulatedserviceclients):
-		try:
-			es.download("equal", str(i))
-			successcount += 1
-		except:
-			pass
+	fragnum = 1
+	for es in emulatedserviceclients:
+		for localfragnum in range(es.fragments):
+			try:
+				es.download("equal", fragnum + localfragnum)
+				successcount += 1
+			except:
+				pass
+		fragnum += es.fragments
 	success = True
 	if successcount < len(emulatedserviceclients):
 		success = False
