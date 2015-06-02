@@ -84,7 +84,7 @@ for service in services:
 print "Emulated service clients:"
 print emulatedserviceclients
 
-print "Placement of fragments according to chosen distribution"
+print "Placement of fragments according to chosen distribution..."
 fragnum = 1
 for es in emulatedserviceclients:
 	for localfragnum in range(es.fragments):
@@ -94,6 +94,13 @@ for es in emulatedserviceclients:
 f = open("_out.csv", "w")
 print >>f, "# vtime(s),emu-avail(%%) for mode:%s target-avail(%%)=%3.4f" % (mode, targetavailability)
 f.close()
+
+comparisoncount = len(emulatedserviceclients)
+significantfragments = sum([es.service.fragment for es in emulatedserviceclients])
+if significantfragments < comparisoncount:
+	# special case for replicated data: one fragment or k<n is enough
+	comparisoncount = significantfragments
+print "Required fragments:", comparisoncount
 
 print "Emulation starts..."
 inittime = int(time.time())
@@ -113,7 +120,7 @@ while True:
 				pass
 		fragnum += es.fragments
 	success = True
-	if successcount < len(emulatedserviceclients):
+	if successcount < comparisoncount:
 		success = False
 		failures += 1
 	else:
