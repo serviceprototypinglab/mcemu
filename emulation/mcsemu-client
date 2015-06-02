@@ -95,11 +95,12 @@ f = open("_out.csv", "w")
 print >>f, "# vtime(s),emu-avail(%%) for mode:%s target-avail(%%)=%3.4f" % (mode, targetavailability)
 f.close()
 
-comparisoncount = len(emulatedserviceclients)
+#comparisoncount = len(emulatedserviceclients)
 significantfragments = sum([es.service.fragment for es in emulatedserviceclients])
-if significantfragments < comparisoncount:
-	# special case for replicated data: one fragment or k<n is enough
-	comparisoncount = significantfragments
+#if significantfragments < comparisoncount:
+#	# special case for replicated data: one fragment or k<n is enough
+#	comparisoncount = significantfragments
+comparisoncount = significantfragments
 print "Required fragments:", comparisoncount
 
 print "Emulation starts..."
