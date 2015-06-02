@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 #
 # Emulates storage service availabilities with launch/shutdown control over local FTP/HTTP servers (gatling)
-# Syntax: mcsemu-server <inifile>
+# Syntax: mcsemu-server <inifile> [stable]
+# - stable: emulate 100% availability (= reliability)
 
 import sys
 import time
@@ -13,10 +14,6 @@ import os
 sys.path.append("..")
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
-
-if len(sys.argv) != 2:
-	print "Syntax: mcsemu-server <inifile>"
-	sys.exit(1)
 
 class EmulatedService:
 	def __init__(self, service, ftpport, httpport):
@@ -57,6 +54,14 @@ class EmulatedService:
 		self.process = None
 		self.online = False
 
+if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] != "stable"):
+	print "Syntax: mcsemu-server <inifile> [stable]"
+	sys.exit(1)
+
+stable = False
+if len(sys.argv) == 3 and sys.argv[2] == "stable":
+	stable = True
+
 sg = ServiceGenerator()
 services = sg.loadservices(sys.argv[1])
 
@@ -77,9 +82,12 @@ print emulatedservices
 print "Emulation starts..."
 inittime = int(time.time())
 while True:
-	time.sleep(1)
+	time.sleep((1, 5)[stable])
 
 	for es in emulatedservices:
+		if stable:
+			continue
+
 		if es.online:
 			es.avonline += 1
 		else:
