@@ -91,8 +91,14 @@ for es in emulatedserviceclients:
 		es.upload("equal", fragnum + localfragnum)
 	fragnum += es.fragments
 
+f = open("_out.csv", "w")
+print >>f, "# vtime(s),emu-avail(%%) for mode:%s target-avail(%%)=%3.4f" % (mode, targetavailability)
+f.close()
+
 print "Emulation starts..."
 inittime = int(time.time())
+successes = 0
+failures = 0
 while True:
 	time.sleep(random.random() * 5)
 
@@ -109,4 +115,13 @@ while True:
 	success = True
 	if successcount < len(emulatedserviceclients):
 		success = False
-	print "* virtual time [%5i]: download equal: %i [%i/%i]" % (int(time.time()) - inittime, success, successcount, len(emulatedserviceclients))
+		failures += 1
+	else:
+		successes += 1
+	emuavail = float(successes) / (successes + failures)
+	vtime = int(time.time()) - inittime
+	print "* virtual time [%5i]: download %s: %s [%i/%i]; emu-avail: %3.4f" % (vtime, mode, success, successcount, len(emulatedserviceclients), emuavail)
+
+	f = open("_out.csv", "a")
+	print >>f, "%i,%3.4f" % (vtime, emuavail)
+	f.close()
