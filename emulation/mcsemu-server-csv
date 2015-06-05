@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Variant of mcsemu-server which only logs to CSV without launch/shutdown
+# Attention: Value per service is unavailability
+
+import sys
+import time
+import random
+
+sys.path.append("..")
+from mcsalgorithms.distavail import Service, ServiceSet
+from mcsalgorithms.servicegen import ServiceGenerator
+
+class EmulatedService:
+	def __init__(self, service):
+		self.service = service
+		self.avonline = 1
+		self.avoffline = 0
+		self.process = None
+		self.online = True
+
+	def realav(self):
+		realav = float(self.avonline) / (self.avonline + self.avoffline)
+		return realav
+
+	def __repr__(self):
+		unavailablestate = "10"[self.online]
+		return unavailablestate
+
+if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] != "stable"):
+	print "Syntax: mcsemu-server-csv <inifile> [stable]"
+	sys.exit(1)
+
+stable = False
+if len(sys.argv) == 3 and sys.argv[2] == "stable":
+	stable = True
+
+sg = ServiceGenerator()
+services = sg.loadservices(sys.argv[1])
+
+emulatedservices = []
+for service in services:
+	emulatedservices.append(EmulatedService(service))
+
+print "#time,onlinestate(s)..."
+inittime = int(time.time())
+while True:
+	time.sleep((1, 5)[stable])
+
+	for es in emulatedservices:
+		if stable:
+			continue
+
+		if es.online:
+			es.avonline += 1
+		else:
+			es.avoffline += 1
+
+		avdiff = es.realav() - es.service.availability
+		switchprobability = random.random()
+
+		if es.online:
+			if avdiff > 0 and abs(avdiff) > switchprobability:
+				es.online = False
+		elif not es.online:
+			if avdiff < 0 and abs(avdiff) > switchprobability:
+				es.online = True
+
+	print "%i,%s" % (int(time.time()) - inittime, ",".join([str(x) for x in emulatedservices]))
