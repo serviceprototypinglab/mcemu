@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 #
 # Emulates storage service availabilities with launch/shutdown control over local FTP/HTTP servers (gatling)
-# Syntax: mcsemu-server <inifile> [stable]
-# - stable: emulate 100% availability (= reliability)
+# Syntax: mcsemu-server <inifile> [<hook>] [<model>]
+# - model==stable: emulate 100% availability (= reliability)
+# - with csvoutput==True: Variant of mcsemu-server which only logs to CSV without launch/shutdown
+# Attention: Value per service is unavailability
 
 import sys
 import time
@@ -11,24 +13,26 @@ import random
 import subprocess
 import os
 
+import dockerhook
+
+csvoutput = False
+
 sys.path.append("..")
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
 
 class EmulatedService:
-	def __init__(self, service, ftpport, httpport):
+	def __init__(self, service, hook, ftpport=None, httpport=None, dockerimage=None):
 		self.service = service
+		self.hook = hook
 		self.ftpport = ftpport
 		self.httpport = httpport
+		self.dockerimage = dockerimage
 		self.avonline = 1
 		self.avoffline = 0
 		self.process = None
 		self.online = None
-		self.workdir = os.path.join(os.getcwd(), "_rootdirs", service.name)
-		try:
-			os.makedirs(self.workdir)
-		except OSError:
-			pass
+		self.prepareservice()
 		self.startservice()
 
 	def realav(self):
@@ -36,56 +40,123 @@ class EmulatedService:
 		return realav
 
 	def __repr__(self):
-		onlinestate = " x"[self.online]
-		return "ES[%s:ftp:%i,http:%i,av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.ftpport, self.httpport, self.service.availability, self.realav(), onlinestate)
+		global csvoutput
+
+		if csvoutput:
+			unavailablestate = "10"[self.online]
+			return unavailablestate
+		else:
+			onlinestate = " x"[self.online]
+			if self.hook == "gatling":
+				return "ES[%s:ftp:%i,http:%i,av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.ftpport, self.httpport, self.service.availability, self.realav(), onlinestate)
+			else:
+				return "ES[%s:av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.service.availability, self.realav(), onlinestate)
+
+	def prepareservice(self):
+		if self.hook == "gatling":
+			self.workdir = os.path.join(os.getcwd(), "_rootdirs", service.name)
+			try:
+				os.makedirs(self.workdir)
+			except OSError:
+				pass
 
 	def startservice(self):
-		origdir = os.getcwd()
-		cmd = "gatling -n -S -p %i -fp %i" % (self.httpport, self.ftpport)
-		os.chdir(self.workdir)
-		self.process = subprocess.Popen(cmd.split(" "))
-		os.chdir(origdir)
-		print ">> %s -> %i" % (cmd, self.process.pid)
+		if self.hook == "gatling":
+			origdir = os.getcwd()
+			cmd = "gatling -n -S -p %i -fp %i" % (self.httpport, self.ftpport)
+			os.chdir(self.workdir)
+			self.process = subprocess.Popen(cmd.split(" "))
+			os.chdir(origdir)
+			print ">> %s -> %i" % (cmd, self.process.pid)
+		elif self.hook == "docker":
+			if self.dockerimage:
+				print ">> run docker image", self.dockerimage
+				dockerhook.instantiate(self.dockerimage)
+			else:
+				print ">> cannot run non-existing docker image"
 		self.online = True
 
 	def stopservice(self):
-		print ">> kill %i" % self.process.pid
-		self.process.kill()
-		self.process = None
+		if self.hook == "gatling":
+			print ">> kill %i" % self.process.pid
+			self.process.kill()
+			self.process = None
+		elif self.hook == "docker":
+			if self.dockerimage:
+				print ">> kill docker image", self.dockerimage
+				dockerhook.shutdown(self.dockerimage)
+			else:
+				print ">> cannot kill non-existing docker image"
 		self.online = False
 
-if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] != "stable"):
-	print "Syntax: mcsemu-server <inifile> [stable]"
+if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] not in ("noop,gatling,docker")) and (len(sys.argv) != 4 or sys.argv[3] not in ("convergence", "incident", "stable")):
+	print "Syntax: mcsemu-server <inifile> [<hook>] [<model>]"
+	print "Hooks: noop(default),gatling,docker"
+	print "Models: convergence(default),incident,stable"
+	print "Semantics of stable: availability = 100%"
 	sys.exit(1)
 
-stable = False
-if len(sys.argv) == 3 and sys.argv[2] == "stable":
-	stable = True
+hook = "noop"
+if len(sys.argv) >= 3:
+	hook = sys.argv[2]
+
+model = "convergence"
+if len(sys.argv) >= 4:
+	model = sys.argv[3]
 
 sg = ServiceGenerator()
 services = sg.loadservices(sys.argv[1])
 
-print "Services to emulate:"
-print services
+if not csvoutput:
+	print "Services to emulate:"
+	print services
+	print "Execution hook:", hook
+	print "Unavailability:", model
 
-ftpport = 2000
-httpport = 3000
+dockerimages = []
+if hook == "docker":
+	dockerimages = dockerhook.get_docker_images()
+	if not csvoutput:
+		print "Docker images:", dockerimages
+	if len(services) != len(dockerimages):
+		print "WARNING: unequal service/docker image count; may use default availabilities"
+
+ftpport = None
+httpport = None
+if hook == "gatling":
+	ftpport = 2000
+	httpport = 3000
+
 emulatedservices = []
 for service in services:
-	emulatedservices.append(EmulatedService(service, ftpport, httpport))
-	ftpport += 1
-	httpport += 1
+	dockerimage = None
+	if hook == "docker":
+		try:
+			index = dockerimages.index(service.name)
+			dockerimage = dockerimages.pop(index)
+		except:
+			print "WARNING: docker image %s not found on the host" % service.name
+	emulatedservices.append(EmulatedService(service, hook, ftpport, httpport, dockerimage))
+	if hook == "gatling":
+		ftpport += 1
+		httpport += 1
+if hook == "docker" and len(dockerimages) > 0:
+	print "WARNING: unconfigured docker images %s" % str(dockerimages)
 
-print "Emulated services:"
-print emulatedservices
+if csvoutput:
+	print "#time,onlinestate(s)..."
+else:
+	print "Emulated services:"
+	print emulatedservices
 
-print "Emulation starts..."
+	print "Emulation starts..."
 inittime = int(time.time())
+incidenttime = None
 while True:
-	time.sleep((1, 5)[stable])
+	time.sleep((1, 5)[model == "stable"])
 
 	for es in emulatedservices:
-		if stable:
+		if model == "stable":
 			continue
 
 		if es.online:
@@ -96,11 +167,20 @@ while True:
 		avdiff = es.realav() - es.service.availability
 		switchprobability = random.random()
 
-		if es.online:
-			if avdiff > 0 and abs(avdiff) > switchprobability:
+		if model == "convergence":
+			if es.online and avdiff > 0 and abs(avdiff) > switchprobability:
 				es.stopservice()
-		elif not es.online:
-			if avdiff < 0 and abs(avdiff) > switchprobability:
+			elif not es.online and avdiff < 0 and abs(avdiff) > switchprobability:
 				es.startservice()
+		elif model == "incident":
+			if es.online and switchprobability > es.service.availability and avdiff > 0.0:
+				es.stopservice()
+				incidenttime = time.time()
+			elif not es.online and incidenttime and time.time() - incidenttime > 50 + random.random() * 50 + (1.0 - es.service.availability) * 1000:
+				es.startservice()
+				incidenttime = None
 
-	print "* virtual time [%5i]: %s" % (int(time.time()) - inittime, emulatedservices)
+	if csvoutput:
+		print "%i,%s" % (int(time.time()) - inittime, ",".join([str(x) for x in emulatedservices]))
+	else:
+		print "* virtual time [%5i]: %s" % (int(time.time()) - inittime, emulatedservices)
