@@ -72,7 +72,7 @@ while True:
 			if es.online and switchprobability > es.service.availability and avdiff > 0.0:
 				es.online = False
 				incidenttime = time.time()
-			elif not es.online and incidenttime and time.time() - incidenttime > 50 + random.random() * 50:
+			elif not es.online and incidenttime and time.time() - incidenttime > 50 + random.random() * 50 + (1.0 - es.service.availability) * 1000:
 				es.online = True
 				incidenttime = None
 
