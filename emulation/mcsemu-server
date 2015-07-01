@@ -22,7 +22,7 @@ from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
 
 class EmulatedService:
-	def __init__(self, service, hook, ftpport=None, httpport=None, dockerimage=None):
+	def __init__(self, service, hook, ftpport=None, httpport=None, dockerimage=None, output=True):
 		self.service = service
 		self.hook = hook
 		self.ftpport = ftpport
@@ -32,6 +32,7 @@ class EmulatedService:
 		self.avoffline = 0
 		self.process = None
 		self.online = None
+		self.output = output
 		self.prepareservice()
 		self.startservice()
 
@@ -67,26 +68,32 @@ class EmulatedService:
 			os.chdir(self.workdir)
 			self.process = subprocess.Popen(cmd.split(" "))
 			os.chdir(origdir)
-			print ">> %s -> %i" % (cmd, self.process.pid)
+			if self.output:
+				print ">> %s -> %i" % (cmd, self.process.pid)
 		elif self.hook == "docker":
 			if self.dockerimage:
-				print ">> run docker image", self.dockerimage
-				dockerhook.instantiate(self.dockerimage)
+				if self.output:
+					print ">> run docker image", self.dockerimage
+				dockerhook.instantiate(self.dockerimage, output=self.output)
 			else:
-				print ">> cannot run non-existing docker image"
+				if self.output:
+					print ">> cannot run non-existing docker image"
 		self.online = True
 
 	def stopservice(self):
 		if self.hook == "gatling":
-			print ">> kill %i" % self.process.pid
+			if self.output:
+				print ">> kill %i" % self.process.pid
 			self.process.kill()
 			self.process = None
 		elif self.hook == "docker":
 			if self.dockerimage:
-				print ">> kill docker image", self.dockerimage
-				dockerhook.shutdown(self.dockerimage)
+				if self.output:
+					print ">> kill docker image", self.dockerimage
+				dockerhook.shutdown(self.dockerimage, output=self.output)
 			else:
-				print ">> cannot kill non-existing docker image"
+				if self.output:
+					print ">> cannot kill non-existing docker image"
 		self.online = False
 
 if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] not in ("noop,gatling,docker")) and (len(sys.argv) != 4 or sys.argv[3] not in ("convergence", "incident", "stable")):
@@ -136,7 +143,7 @@ for service in services:
 			dockerimage = dockerimages.pop(index)
 		except:
 			print "WARNING: docker image %s not found on the host" % service.name
-	emulatedservices.append(EmulatedService(service, hook, ftpport, httpport, dockerimage))
+	emulatedservices.append(EmulatedService(service, hook, ftpport, httpport, dockerimage, output=not csvoutput))
 	if hook == "gatling":
 		ftpport += 1
 		httpport += 1

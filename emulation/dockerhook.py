@@ -36,15 +36,16 @@ def get_docker_instances():
 			pass
 	return instances
 
-def shutdown(image):
+def shutdown(image, output=True):
 	instances = get_docker_instances()
 	for instanceid in instances:
 		imagebase = instances[instanceid]
 		if imagebase == image:
-			print "+++++ kill", imagebase, instanceid
+			if output:
+				print "+++++ kill", imagebase, instanceid
 			check_output_remote(["docker", "kill", instanceid])
 	pass
 
-def instantiate(image):
+def instantiate(image, output=True):
 	#check_output_remote(["docker", "run", "-d", image])
 	pass
