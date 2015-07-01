@@ -28,13 +28,15 @@ class EmulatedService:
 		unavailablestate = "10"[self.online]
 		return unavailablestate
 
-if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] != "stable"):
-	print "Syntax: mcsemu-server-csv <inifile> [stable]"
+if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] not in ("convergence", "incident", "stable")):
+	print "Syntax: mcsemu-server-csv <inifile> [model]"
+	print "Models: convergence,incident,stable"
+	print "Semantics of stable: availability = 100%"
 	sys.exit(1)
 
-stable = False
-if len(sys.argv) == 3 and sys.argv[2] == "stable":
-	stable = True
+model = "convergence"
+if len(sys.argv) == 3:
+	model = sys.argv[2]
 
 sg = ServiceGenerator()
 services = sg.loadservices(sys.argv[1])
@@ -45,11 +47,12 @@ for service in services:
 
 print "#time,onlinestate(s)..."
 inittime = int(time.time())
+incidenttime = None
 while True:
-	time.sleep((1, 5)[stable])
+	time.sleep((1, 5)[model == "stable"])
 
 	for es in emulatedservices:
-		if stable:
+		if model == "stable":
 			continue
 
 		if es.online:
@@ -60,11 +63,17 @@ while True:
 		avdiff = es.realav() - es.service.availability
 		switchprobability = random.random()
 
-		if es.online:
-			if avdiff > 0 and abs(avdiff) > switchprobability:
+		if model == "convergence":
+			if es.online and avdiff > 0 and abs(avdiff) > switchprobability:
 				es.online = False
-		elif not es.online:
-			if avdiff < 0 and abs(avdiff) > switchprobability:
+			elif not es.online and avdiff < 0 and abs(avdiff) > switchprobability:
 				es.online = True
+		elif model == "incident":
+			if es.online and switchprobability > es.service.availability and avdiff > 0.0:
+				es.online = False
+				incidenttime = time.time()
+			elif not es.online and incidenttime and time.time() - incidenttime > 50 + random.random() * 50:
+				es.online = True
+				incidenttime = None
 
 	print "%i,%s" % (int(time.time()) - inittime, ",".join([str(x) for x in emulatedservices]))
