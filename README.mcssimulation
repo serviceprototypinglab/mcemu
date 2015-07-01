@@ -26,3 +26,11 @@ runtime:
 
 % cd mcssim/
 % ./mcssim
+
+Emulation script for availability changes over time of storage services and
+services in general, with execution support for web servers and containers:
+
+% cd emulation/
+% ./mcsemu-server ../simulations/scenario.ini gatling convergence
+% # after modifying dockerhook.py - IP address and SSH key:
+% ./mcsemu-server ../simulations/cna.ini docker convergence
