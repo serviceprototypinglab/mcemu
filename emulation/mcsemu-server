@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Emulates storage service availabilities with launch/shutdown control over local FTP/HTTP servers (gatling)
+# Emulates storage service availabilities with launch/shutdown control over local file servers, containers, proxies
 # Syntax: mcsemu-server <inifile> [<hook>] [<model>]
 # - model==stable: emulate 100% availability (= reliability)
 # - with csvoutput==True: Variant of mcsemu-server which only logs to CSV without launch/shutdown
@@ -22,11 +22,12 @@ from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
 
 class EmulatedService:
-	def __init__(self, service, hook, ftpport=None, httpport=None, dockerimage=None, output=True):
+	def __init__(self, service, hook, ftpport=None, httpport=None, proxyport=None, dockerimage=None, output=True):
 		self.service = service
 		self.hook = hook
 		self.ftpport = ftpport
 		self.httpport = httpport
+		self.proxyport = proxyport
 		self.dockerimage = dockerimage
 		self.avonline = 1
 		self.avoffline = 0
@@ -50,6 +51,8 @@ class EmulatedService:
 			onlinestate = " x"[self.online]
 			if self.hook == "gatling":
 				return "ES[%s:ftp:%i,http:%i,av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.ftpport, self.httpport, self.service.availability, self.realav(), onlinestate)
+			elif self.hook == "morebalance":
+				return "ES[%s:proxy:%i,av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.proxyport, self.service.availability, self.realav(), onlinestate)
 			else:
 				return "ES[%s:av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.service.availability, self.realav(), onlinestate)
 
@@ -70,6 +73,12 @@ class EmulatedService:
 			os.chdir(origdir)
 			if self.output:
 				print ">> %s -> %i" % (cmd, self.process.pid)
+		elif self.hook == "morebalance":
+			config = "%i use localhost as 80" % self.proxyport
+			cmd = "morebalance -i '%s'" % config
+			self.process = subprocess.Popen(["morebalance", "-i", config])
+			if self.output:
+				print ">> %s -> %i" % (cmd, self.process.pid)
 		elif self.hook == "docker":
 			if self.dockerimage:
 				if self.output:
@@ -86,6 +95,19 @@ class EmulatedService:
 				print ">> kill %i" % self.process.pid
 			self.process.kill()
 			self.process = None
+		elif self.hook == "morebalance":
+			if self.output:
+				print ">> kill %i and sub-thread" % self.process.pid
+			try:
+				pidstring = subprocess.check_output(["pidof", "morebalance"])
+				pids = pidstring.strip().split()
+				for pid in pids:
+					if int(pid) == self.process.pid + 1:
+						os.system("kill %s" % pid)
+			except:
+				pass
+			self.process.kill()
+			self.process = None
 		elif self.hook == "docker":
 			if self.dockerimage:
 				if self.output:
@@ -96,9 +118,9 @@ class EmulatedService:
 					print ">> cannot kill non-existing docker image"
 		self.online = False
 
-if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] not in ("noop,gatling,docker")) and (len(sys.argv) != 4 or sys.argv[3] not in ("convergence", "incident", "stable")):
+if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] not in ("noop", "gatling", "docker", "morebalance")) and (len(sys.argv) != 4 or sys.argv[3] not in ("convergence", "incident", "stable")):
 	print "Syntax: mcsemu-server <inifile> [<hook>] [<model>]"
-	print "Hooks: noop(default),gatling,docker"
+	print "Hooks: noop(default),gatling,docker,morebalance"
 	print "Models: convergence(default),incident,stable"
 	print "Semantics of stable: availability = 100%"
 	sys.exit(1)
@@ -130,9 +152,12 @@ if hook == "docker":
 
 ftpport = None
 httpport = None
+proxyport = None
 if hook == "gatling":
 	ftpport = 2000
 	httpport = 3000
+elif hook == "morebalance":
+	proxyport = 8080
 
 emulatedservices = []
 for service in services:
@@ -143,10 +168,12 @@ for service in services:
 			dockerimage = dockerimages.pop(index)
 		except:
 			print "WARNING: docker image %s not found on the host" % service.name
-	emulatedservices.append(EmulatedService(service, hook, ftpport, httpport, dockerimage, output=not csvoutput))
+	emulatedservices.append(EmulatedService(service, hook, ftpport, httpport, proxyport, dockerimage, output=not csvoutput))
 	if hook == "gatling":
 		ftpport += 1
 		httpport += 1
+	elif hook == "morebalance":
+		proxyport += 1
 if hook == "docker" and len(dockerimages) > 0:
 	print "WARNING: unconfigured docker images %s" % str(dockerimages)
 

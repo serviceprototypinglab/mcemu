@@ -28,7 +28,8 @@ runtime:
 % ./mcssim
 
 Emulation script for availability changes over time of storage services and
-services in general, with execution support for web servers and containers:
+services in general, with execution support for web/file servers (storage),
+containers (compute) and proxies (network):
 
 % cd emulation/
 % ./mcsemu-server ../simulations/scenario.ini gatling convergence
