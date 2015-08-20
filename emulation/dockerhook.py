@@ -1,12 +1,19 @@
+# Setup environment variables:
+# DOCKERKEY (SSH PEM file) and DOCKERHOST (core@...)
+
 import os
 import subprocess
 
 def check_output_remote(arglist):
-	key = "spio_aws.pem"
-	#account = "core@172.17.42.1"
-	account = "core@52.24.97.44"
-	home = os.getenv("HOME")
-	return subprocess.check_output(["ssh", "-i", "%s/.ssh/%s" % (home, key), account] + arglist)
+	runcommand = ["ssh"]
+	dockerkey = os.getenv("DOCKERKEY")
+	if dockerkey:
+		runcommand += ["-i", dockerkey]
+	dockerhost = os.getenv("DOCKERHOST")
+	if not dockerhost:
+		dockerhost = "core@localhost"
+	runcommand += [dockerhost]
+	return subprocess.check_output(runcommand + arglist)
 
 def get_docker_images():
 	images = []
@@ -48,4 +55,5 @@ def shutdown(image, output=True):
 
 def instantiate(image, output=True):
 	#check_output_remote(["docker", "run", "-d", image])
+	# Note: If 'dynamite' is detected, instances are assumed to be running already, but otherwise they should be started
 	pass
