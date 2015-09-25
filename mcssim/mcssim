@@ -37,12 +37,13 @@ class PICavVis(QtGui.QWidget):
 		self.setWindowTitle("Multi-Cloud Storage Simulator")
 
 		model = QtGui.QStandardItemModel()
-		model.setColumnCount(5)
+		model.setColumnCount(6)
 		model.setHeaderData(0, Qt.Horizontal, "Service")
 		model.setHeaderData(1, Qt.Horizontal, "Availability")
 		model.setHeaderData(2, Qt.Horizontal, "Capacity")
 		model.setHeaderData(3, Qt.Horizontal, "Price")
-		model.setHeaderData(4, Qt.Horizontal, "Data")
+		model.setHeaderData(4, Qt.Horizontal, "Data Sig")
+		model.setHeaderData(5, Qt.Horizontal, "Data Red")
 
 		self.qtv = QtGui.QTreeView(self)
 		self.qtv.setModel(model)
@@ -232,7 +233,9 @@ class PICavVis(QtGui.QWidget):
 				for i in range(len(self.services)):
 					item = modelitem.child(i, 0)
 					if item.text() == service.name:
-						modelitem.child(i, 4).setText("%i+%i" % (service.fragment, service.redundant))
+						#modelitem.child(i, 4).setText("%i+%i" % (service.fragment, service.redundant))
+						modelitem.child(i, 4).setText("%i" % service.fragment)
+						modelitem.child(i, 5).setText("%i" % service.redundant)
 
 			price = sum([x.price for x in self.services])
 			m = sum(s.redundant for s in self.services)
@@ -274,9 +277,14 @@ class PICavVis(QtGui.QWidget):
 			c.setEditable(False)
 			p = QtGui.QStandardItem(ps)
 			p.setEditable(False)
+			s = QtGui.QStandardItem("1")
+			print dir(s)
+			s.setBackground(QtGui.QColor(255, 200, 200))
+			s.setEditable(False)
 			r = QtGui.QStandardItem("%i" % service.redundant)
 			r.setEditable(False)
-			modelitem.appendRow((serviceitem, av, c, p, r))
+			r.setBackground(QtGui.QColor(255, 220, 220))
+			modelitem.appendRow((serviceitem, av, c, p, s, r))
 
 	def load(self, filename):
 		sg = ServiceGenerator()
