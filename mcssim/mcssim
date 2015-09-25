@@ -123,14 +123,26 @@ class PICavVis(QtGui.QWidget):
 	def slot_pressed(self, index):
 		if QtGui.QApplication.mouseButtons() & Qt.RightButton:
 			action_configure = QtGui.QAction("Configure...", self)
-			action_configure.setEnabled(False)
+			#action_configure.setEnabled(False)
 			action_remove = QtGui.QAction("Remove", self)
-			action_remove.setEnabled(False)
+			#action_remove.setEnabled(False)
+			self.connect(action_configure, QtCore.SIGNAL("activated()"), self, QtCore.SLOT("slot_configure()"))
+			self.connect(action_remove, QtCore.SIGNAL("activated()"), self, QtCore.SLOT("slot_remove()"))
 			menu = QtGui.QMenu()
 			menu.addAction(action_configure)
 			menu.addSeparator()
 			menu.addAction(action_remove)
 			menu.exec_(QtGui.QCursor.pos())
+
+	@pyqtSlot()
+	def slot_configure(self):
+		print "configure..."
+		pass
+
+	@pyqtSlot()
+	def slot_remove(self):
+		print "remove..."
+		pass
 
 	@pyqtSlot(QtCore.QString)
 	def slot_tracing(self, s):
@@ -278,7 +290,6 @@ class PICavVis(QtGui.QWidget):
 			p = QtGui.QStandardItem(ps)
 			p.setEditable(False)
 			s = QtGui.QStandardItem("1")
-			print dir(s)
 			s.setBackground(QtGui.QColor(255, 200, 200))
 			s.setEditable(False)
 			r = QtGui.QStandardItem("%i" % service.redundant)
