@@ -17,6 +17,8 @@ class ServiceGenerator:
 			config.set(s.name, "av", s.availability)
 			config.set(s.name, "c", s.capacity)
 			config.set(s.name, "p", s.price)
+			for prop in s.properties.keys():
+				config.set(s.name, prop, s.properties[prop])
 		f = open(filename, "w")
 		config.write(f)
 
@@ -37,7 +39,12 @@ class ServiceGenerator:
 				p = 0.0
 			if av > 1:
 				av /= 100.0
-			s = Service(section, availability=av, price=p, capacity=c)
+			properties = {}
+			items = config.items(section)
+			for itemname, itemvalue in items:
+				if itemname not in ("av", "c", "p"):
+					properties[itemname] = itemvalue
+			s = Service(section, availability=av, price=p, capacity=c, properties=properties)
 			services.append(s)
 		return services
 

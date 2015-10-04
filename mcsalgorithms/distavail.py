@@ -9,7 +9,7 @@ import itertools
 import random
 
 class Service:
-	def __init__(self, name, availability=1.0, redundant=0, price=0, capacity=0):
+	def __init__(self, name, availability=1.0, redundant=0, price=0, capacity=0, properties={}):
 		self.name = name
 		self.fragment = 1
 		self.redundant = redundant
@@ -17,12 +17,17 @@ class Service:
 		self.price = price
 		self.capacity = capacity
 
+		self.properties = properties
+
 	def reset(self):
 		self.fragment = 1
 		self.redundant = 0
 
 	def __repr__(self):
-		return "S[%s:f=%i/r=%i,av=%3.4f,p=%3.2f,c=%i]" % (self.name, self.fragment, self.redundant, self.availability, self.price, self.capacity)
+		extraprops = ""
+		for prop in self.properties.keys():
+			extraprops += "," + prop + "=" + self.properties[prop]
+		return "S[%s:f=%i/r=%i,av=%3.4f,p=%3.2f,c=%i%s]" % (self.name, self.fragment, self.redundant, self.availability, self.price, self.capacity, extraprops)
 
 class ServiceSet:
 	def __init__(self, services, debug=True, debugout=True):
