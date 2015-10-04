@@ -26,6 +26,7 @@ class PICavVis(QtGui.QWidget):
 		self.targetruntime = -1
 		self.tracing = None
 		self.algorithm = None
+		self.preference = None
 
 		self.setupgui(parent)
 		#self.setup()
@@ -66,6 +67,13 @@ class PICavVis(QtGui.QWidget):
 		spinbox_runtime.setMaximum(3600)
 		self.connect(spinbox_runtime, QtCore.SIGNAL("valueChanged(int)"), self, QtCore.SLOT("slot_changed_runtime(int)"))
 
+		label_pref = QtGui.QLabel("Preference:")
+		combo_pref = QtGui.QComboBox()
+		combo_pref.addItem("Availability")
+		combo_pref.addItem("Capacity")
+		combo_pref.addItem("Price")
+		self.connect(combo_pref, QtCore.SIGNAL("activated(QString)"), self, QtCore.SLOT("slot_preference(QString)"))
+
 		label_algo = QtGui.QLabel("Algorithm:")
 		combo_algo = QtGui.QComboBox()
 		combo_algo.addItem("Fixed")
@@ -99,6 +107,8 @@ class PICavVis(QtGui.QWidget):
 		hbox_goals.addWidget(spinbox_capacity)
 		hbox_goals.addWidget(label_price)
 		hbox_goals.addWidget(spinbox_price)
+		hbox_goals.addWidget(label_pref)
+		hbox_goals.addWidget(combo_pref)
 		hbox_goals.addWidget(label_runtime)
 		hbox_goals.addWidget(spinbox_runtime)
 		hbox_goals.addStretch()
@@ -151,6 +161,10 @@ class PICavVis(QtGui.QWidget):
 	@pyqtSlot(QtCore.QString)
 	def slot_algorithm(self, s):
 		self.algorithm = s
+
+	@pyqtSlot(QtCore.QString)
+	def slot_preference(self, s):
+		self.preference = s
 
 	@pyqtSlot(int)
 	def slot_changed_av(self, v):
@@ -253,6 +267,24 @@ class PICavVis(QtGui.QWidget):
 			m = sum(s.redundant for s in self.services)
 			k = len(self.services)
 			overhead = float(k + m) / k - 1.0
+			if type(oav) == dict:
+				pref = None
+				if not self.preference:
+					pref = "availability"
+				if self.preference == "Availability":
+					pref = "availability"
+				elif self.preference == "Capacity":
+					pref = "capacity"
+				elif self.preference == "Price":
+					pref = "price"
+				if pref in oav.keys():
+					oav = oav[pref][1]
+				elif "capacity" in oav.keys():
+					oav = oav["capacity"][1]
+				elif "availability" in oav.keys():
+					oav = oav["availability"][1]
+				elif "default" in oav.keys():
+					oav = oav["default"][1]
 			self.label_algoout.setText("av:%3.4f%% c-o:%3.2f%% p:%3.2f [time:%3.2f ms]" % (oav * 100, overhead * 100, price, t_diff))
 			if debug and "getlog" in dir(distributionmethod):
 				self.text_algoout.setText(distributionmethod.getlog())
