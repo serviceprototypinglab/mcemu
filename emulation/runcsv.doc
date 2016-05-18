@@ -1,2 +1,2 @@
-python -u ./mcsemu-server ../simulations/singleservice.ini noop convergence > emulationtrace/singleservice.convergence.csv
-python -u ./mcsemu-server ../simulations/singleservice.ini noop incident > emulationtrace/singleservice.incident.csv
+python -u ./mcemu-server ../simulations/singleservice.ini noop convergence > emulationtrace/singleservice.convergence.csv
+python -u ./mcemu-server ../simulations/singleservice.ini noop incident > emulationtrace/singleservice.incident.csv

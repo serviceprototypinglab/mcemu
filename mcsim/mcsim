@@ -35,7 +35,7 @@ class PICavVis(QtGui.QWidget):
 		QtGui.QWidget.__init__(self, parent)
 
 		self.resize(750, 500)
-		self.setWindowTitle("Multi-Cloud Storage Simulator")
+		self.setWindowTitle("Multi-Cloud Simulator")
 
 		model = QtGui.QStandardItemModel()
 		model.setColumnCount(6)

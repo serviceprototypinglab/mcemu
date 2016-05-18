@@ -1,0 +1,44 @@
+Multi-Cloud Simulation + Emulation framework (MC-SIM/MC-EMU):
+Targeted failures of compute, storage and networking resouces
+Copyright (C) 2015, 2016 Josef Spillner <josef.spillner@zhaw.ch>
+========================================================================
+
+The framework allows for investigating advanced multi-cloud
+configurations including a determination of data fragment distributions
+for constrained dispersal. The emulation enforces simulated failures on
+target services.
+
+Dispersing or secret-sharing fragmented data with a selective amount of
+redundancy onto heterogeneous storage or transmission targets is a
+challenge when having to determine the optimal distribution assignment.
+There are multiple determination schemes, but most do not consider all
+constraints, such as a maximum overall transmission price or elastically
+scalable storage services. The multi-cloud simulation tools help
+determining the distribution with multiple schemes in parallel. They
+also allow for comparing the schemes based on their result quality and
+execution time.
+
+Simple availability calculation for a service with varying amount of
+redundancy:
+
+% ./calculation/calc-availability.py precise simulations/goldstandardservices.ini
+
+Comparative execution of distribution determination schemes with certain
+limits for overall availability, capacity and price, as well as execution
+runtime:
+
+% ./calculation/calc-distribution.py generated 0.90 9 20.23 0.001 all
+
+% Graphical tool MC-SIM to execute and analyse the schemes individually:
+
+% cd mcsim/
+% ./mcsim
+
+Emulation script for availability changes over time of storage services and
+services in general, with execution support for web/file servers (storage),
+containers (compute) and proxies (network):
+
+% cd emulation/
+% ./mcemu-server ../simulations/scenario.ini gatling convergence
+% # after modifying dockerhook.py - IP address and SSH key:
+% ./mcemu-server ../simulations/cna.ini docker convergence

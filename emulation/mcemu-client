@@ -4,7 +4,7 @@
 # Emulates storage service usage by retrieving fragments from emulated FTP/HTTP servers
 # Attention: Only supports availability, none of the other goal properties
 # Attention: Only supports individual algorithms, not the 'all' mode
-# Syntax: mcsemu-client <inifile> <min-availability/0> <algorithm>
+# Syntax: mcemu-client <inifile> <min-availability/0> <algorithm>
 # Algorithms: fixed|proportional|absolute|random|combinatory|staggered|picav|picav+
 
 import sys
@@ -48,7 +48,7 @@ class EmulatedServiceClient:
 		urllib.urlopen(httpurl)
 
 if len(sys.argv) != 4:
-	print "Syntax: mcsemu-client <inifile> <min-availability/0> <algorithm>"
+	print "Syntax: mcemu-client <inifile> <min-availability/0> <algorithm>"
 	print "Algorithms: fixed|proportional|absolute|random|combinatory|staggered|picav|picav+"
 	sys.exit(1)
 

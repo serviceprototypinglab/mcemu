@@ -7,6 +7,7 @@
 import sys
 import time
 
+sys.path.append("..")
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
 
