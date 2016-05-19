@@ -43,7 +43,7 @@ class Combinatory:
 
 		for s in powersetlist:
 			for k in range(1, len(s) + 1):
-				ss = ServiceSet(s, debug=self.internaldebug)
+				ss = ServiceSet(s, debug=self.internaldebug, debugout=self.debugout)
 				oav = ss.availability(k, self.calcmode)
 				if oav >= targetavailability:
 					##hit = len(s)

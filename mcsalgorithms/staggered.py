@@ -76,7 +76,7 @@ class Staggered:
 		while len(services) > 0:
 			dispslice = min([s.capacity for s in services]) - dispslicetotal
 			self.log("- dispslice %i over %i nodes" % (dispslice, len(services)))
-			ss = ServiceSet(services, debug=self.internaldebug)
+			ss = ServiceSet(services, debug=self.internaldebug, debugout=self.debugout)
 			sliceconfig = []
 			price = sum([s.price for s in services]) * dispslice * len(services)
 			for k in range(1, len(services) + 1):
