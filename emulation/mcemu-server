@@ -18,7 +18,8 @@ import dockerhook
 csvoutput = False
 
 sys.path.append("..")
-os.chdir(os.path.dirname(sys.argv[0]))
+sys.path.append(".")
+#os.chdir(os.path.dirname(sys.argv[0]))
 
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
@@ -50,13 +51,16 @@ class EmulatedService:
 			unavailablestate = "10"[self.online]
 			return unavailablestate
 		else:
+			properties = ""
+			if "pop" in self.service.properties:
+				properties += ",load=%3.4f" % 0.0
 			onlinestate = " x"[self.online]
 			if self.hook == "gatling":
-				return "ES[%s:ftp:%i,http:%i,av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.ftpport, self.httpport, self.service.availability, self.realav(), onlinestate)
+				return "ES[%s:ftp:%i,http:%i,av=%3.4f,realav:%3.4f%s][%s]" % (self.service.name, self.ftpport, self.httpport, self.service.availability, self.realav(), properties, onlinestate)
 			elif self.hook == "morebalance":
-				return "ES[%s:proxy:%i,av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.proxyport, self.service.availability, self.realav(), onlinestate)
+				return "ES[%s:proxy:%i,av=%3.4f,realav:%3.4f%s][%s]" % (self.service.name, self.proxyport, self.service.availability, self.realav(), properties, onlinestate)
 			else:
-				return "ES[%s:av=%3.4f,realav:%3.4f][%s]" % (self.service.name, self.service.availability, self.realav(), onlinestate)
+				return "ES[%s:av=%3.4f,realav:%3.4f%s][%s]" % (self.service.name, self.service.availability, self.realav(), properties, onlinestate)
 
 	def prepareservice(self):
 		if self.hook == "gatling":
@@ -75,6 +79,10 @@ class EmulatedService:
 			os.chdir(origdir)
 			if self.output:
 				print ">> %s -> %i" % (cmd, self.process.pid)
+
+			if "pop" in self.service.properties:
+				# tsung -f tsung_http_simple.xml start
+				pass
 		elif self.hook == "morebalance":
 			config = "%i use localhost as 80" % self.proxyport
 			cmd = "morebalance -i '%s'" % config

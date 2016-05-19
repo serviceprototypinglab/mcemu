@@ -28,7 +28,10 @@ class ServiceGenerator:
 		config.read(filename)
 		sections = config.sections()
 		for section in sections:
-			av = config.getfloat(section, "av")
+			try:
+				av = config.getfloat(section, "av")
+			except:
+				av = 1
 			try:
 				c = config.getint(section, "c")
 			except:
