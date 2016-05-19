@@ -6,8 +6,11 @@
 
 import sys
 import time
+import os
 
 sys.path.append("..")
+os.chdir(os.path.dirname(sys.argv[0]))
+
 from mcsalgorithms.distavail import Service, ServiceSet
 from mcsalgorithms.servicegen import ServiceGenerator
 from mcsalgorithms.fixedproportional import FixedProportional
