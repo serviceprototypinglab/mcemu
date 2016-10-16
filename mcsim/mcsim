@@ -256,6 +256,7 @@ class PICavVis(QtGui.QWidget):
 		modelitem = self.qtv.model().invisibleRootItem()
 		for i in range(len(self.services)):
 			modelitem.child(i, 4).setText("")
+			modelitem.child(i, 5).setText("")
 
 		if oav:
 			for service in self.services:
