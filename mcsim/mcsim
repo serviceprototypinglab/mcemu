@@ -7,8 +7,8 @@ import sys
 import os
 import time
 
-sys.path.append("..")
-os.chdir(os.path.dirname(sys.argv[0]))
+basepath = os.path.join(os.path.dirname(sys.argv[0]))
+sys.path.append(os.path.join(basepath, ".."))
 
 from mcsalgorithms.servicegen import ServiceGenerator
 from mcsalgorithms.distavail import Service, ServiceSet
@@ -20,7 +20,7 @@ from mcsalgorithms.staggered import Staggered
 from mcsalgorithms.randomtargets import Random
 
 class PICavVis(QtGui.QWidget):
-	def __init__(self, parent=None):
+	def __init__(self, parent=None, basepath="."):
 		self.services = []
 		self.targetav = 0
 		self.targetc = 0
@@ -29,6 +29,8 @@ class PICavVis(QtGui.QWidget):
 		self.tracing = None
 		self.algorithm = None
 		self.preference = None
+
+		self.basepath = basepath
 
 		self.setupgui(parent)
 		#self.setup()
@@ -307,7 +309,7 @@ class PICavVis(QtGui.QWidget):
 
 	def setupcontent(self, modelitem):
 		for service in self.services:
-			serviceitem = QtGui.QStandardItem(QtGui.QIcon("cloudfolder.png"), service.name)
+			serviceitem = QtGui.QStandardItem(QtGui.QIcon(os.path.join(basepath, "cloudfolder.png")), service.name)
 			serviceitem.setEditable(False)
 			av = QtGui.QStandardItem("%3.2f" % (service.availability * 100) + " %/a")
 			av.setEditable(False)
@@ -346,7 +348,7 @@ class PICavVis(QtGui.QWidget):
 QtCore.QTextCodec.setCodecForCStrings(QtCore.QTextCodec.codecForName("UTF-8"))
 
 app = QtGui.QApplication(sys.argv)
-pav = PICavVis()
+pav = PICavVis(basepath=basepath)
 if len(sys.argv) == 2:
 	pav.load(sys.argv[1])
 else:
