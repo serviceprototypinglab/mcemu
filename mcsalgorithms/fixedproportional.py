@@ -43,6 +43,8 @@ class FixedProportional:
 				shares = [int(multiplier * float(s.capacity) / sumcapacity) for s in services]
 			elif submode == "price":
 				services.sort(key=lambda s: s.price, reverse=True)
+				if not services:
+					return None
 				maxprice = services[0].price
 				sumprice = sum([maxprice - s.price for s in services])
 				if sumprice == 0:
@@ -51,11 +53,15 @@ class FixedProportional:
 		elif mode == "absolute":
 			if not submode or submode == "availability":
 				services.sort(key=lambda s: s.availability, reverse=True)
+				if not services:
+					return None
 				absservice = services[0]
 			elif submode == "capacity":
 				services.sort(key=lambda s: s.capacity, reverse=True)
 			elif submode == "price":
 				services.sort(key=lambda s: s.price)
+			if not services:
+				return None
 			absservice = services[0]
 			shares = [len(services)] + [0] * (len(services) - 1)
 

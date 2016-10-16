@@ -33,6 +33,8 @@ class Random:
 				service.redundant = shares[i] - 1
 
 		self.log("Random shares = %s" % str(shares))
+		if not shares:
+			return None
 
 		ss = ServiceSet(services, debug=False)
 		oav = ss.availability(k=random.randint(1, len(services)), mode=self.calcmode)
