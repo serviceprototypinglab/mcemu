@@ -29,7 +29,8 @@ runtime:
 
 % ./calculation/calc-distribution.py generated 0.90 9 20.23 0.001 all
 
-Graphical tool MC-SIM to execute and analyse the schemes individually:
+Graphical tool MC-SIM to execute and analyse the schemes individually,
+assuming both Python2 and python-qt4 are installed:
 
 % cd mcsim/
 % ./mcsim <*.ini>
@@ -49,3 +50,9 @@ pre-defined files. Each section contains the service name while each key-value
 pair inside the section describes a property. The recognised property names
 are: av (availability), c (capacity), p (price). All other properties are
 treated as opaque, e.g. rt (response time).
+
+The output of calc-distribution contains several variants of the schemes. They
+are suffixed with 'sp' for split, 're' for replication, 'pl' for plain and
+'co' for combinatory, as well as 'av', 'ca' and 'pr' for the target metrics
+availability, capacity and price, respectively. Note that this differs from
+the abbreviations in the INI files.
