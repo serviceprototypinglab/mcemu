@@ -1,18 +1,18 @@
 # Setup environment variables:
-# DOCKERKEY (SSH PEM file) and DOCKERHOST (core@...)
+# DOCKERKEY (SSH PEM file) and DOCKERHOST (e.g. core@localhost)
 
 import os
 import subprocess
 
 def check_output_remote(arglist):
-	runcommand = ["ssh"]
-	dockerkey = os.getenv("DOCKERKEY")
-	if dockerkey:
-		runcommand += ["-i", dockerkey]
+	runcommand = []
 	dockerhost = os.getenv("DOCKERHOST")
-	if not dockerhost:
-		dockerhost = "core@localhost"
-	runcommand += [dockerhost]
+	if dockerhost:
+		runcommand = ["ssh"]
+		dockerkey = os.getenv("DOCKERKEY")
+		if dockerkey:
+			runcommand += ["-i", dockerkey]
+		runcommand += [dockerhost]
 	return subprocess.check_output(runcommand + arglist)
 
 def get_docker_images():
@@ -21,8 +21,8 @@ def get_docker_images():
 	for line in output.split("\n"):
 		try:
 			image = line.split()[0]
-			if not image.startswith("icclab"):
-				continue
+			#if not image.startswith("icclab"):
+			#	continue
 			images.append(image)
 		except:
 			pass
@@ -35,8 +35,8 @@ def get_docker_instances():
 		try:
 			instanceid = line.split()[0]
 			image = line.split()[1]
-			if not image.startswith("icclab"):
-				continue
+			#if not image.startswith("icclab"):
+			#	continue
 			imagebase = image.split(":")[0]
 			instances[instanceid] = imagebase
 		except:

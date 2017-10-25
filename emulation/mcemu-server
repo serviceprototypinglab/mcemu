@@ -128,10 +128,10 @@ class EmulatedService:
 					print ">> cannot kill non-existing docker image"
 		self.online = False
 
-if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] not in ("noop", "gatling", "docker", "morebalance")) and (len(sys.argv) != 4 or sys.argv[3] not in ("convergence", "incident", "stable")):
+if len(sys.argv) != 2 and (len(sys.argv) != 3 or sys.argv[2] not in ("noop", "gatling", "docker", "morebalance")) and (len(sys.argv) != 4 or sys.argv[3] not in ("convergence", "incident", "stable", "random")):
 	print "Syntax: mcemu-server <inifile> [<hook>] [<model>]"
 	print "Hooks: noop(default),gatling,docker,morebalance"
-	print "Models: convergence(default),incident,stable"
+	print "Models: convergence(default),incident,stable,random"
 	print "Semantics of stable: availability = 100%"
 	sys.exit(1)
 
@@ -223,6 +223,11 @@ while True:
 			elif not es.online and incidenttime and time.time() - incidenttime > 50 + random.random() * 50 + (1.0 - es.service.availability) * 1000:
 				es.startservice()
 				incidenttime = None
+		elif model == "random":
+			if es.online and switchprobability < 0.05:
+				es.stopservice()
+			elif not es.online and switchprobability < 0.05:
+				es.startservice()
 
 	if csvoutput:
 		print "%i,%s" % (int(time.time()) - inittime, ",".join([str(x) for x in emulatedservices]))
